@@ -1,0 +1,242 @@
+{
+  "passengers": [
+    {
+      "id": 318,
+      "name": "昇暉",
+      "gender": "male"
+    },
+    {
+      "id": 319,
+      "name": "翔均",
+      "gender": "male"
+    },
+    {
+      "id": 322,
+      "name": "宥紘",
+      "gender": "male"
+    },
+    {
+      "id": 323,
+      "name": "家澄",
+      "gender": "male"
+    },
+    {
+      "id": 325,
+      "name": "倍銓",
+      "gender": "male"
+    },
+    {
+      "id": 326,
+      "name": "星甫",
+      "gender": "male"
+    },
+    {
+      "id": 327,
+      "name": "妍雯",
+      "gender": "female"
+    },
+    {
+      "id": 331,
+      "name": "依萱",
+      "gender": "female"
+    },
+    {
+      "id": 333,
+      "name": "宸儀",
+      "gender": "female"
+    },
+    {
+      "id": 334,
+      "name": "季燕",
+      "gender": "female"
+    },
+    {
+      "id": 335,
+      "name": "建佑",
+      "gender": "male"
+    },
+    {
+      "id": 336,
+      "name": "慶慧",
+      "gender": "female"
+    },
+    {
+      "id": 340,
+      "name": "政榮",
+      "gender": "male"
+    },
+    {
+      "id": 351,
+      "name": "詠霖",
+      "gender": "male"
+    },
+    {
+      "id": 352,
+      "name": "泓政",
+      "gender": "male"
+    },
+    {
+      "id": 357,
+      "name": "宜珈",
+      "gender": "female"
+    },
+    {
+      "id": 358,
+      "name": "曼禕",
+      "gender": "female"
+    },
+    {
+      "id": 359,
+      "name": "惠雯",
+      "gender": "female"
+    },
+    {
+      "id": 360,
+      "name": "煌林",
+      "gender": "male"
+    },
+    {
+      "id": 361,
+      "name": "哲蒝",
+      "gender": "male"
+    }
+  ],
+  "assignments": [
+    {
+      "name": "家澄",
+      "vehicle_id": 5,
+      "seat_index": 0
+    },
+    {
+      "name": "慶慧",
+      "vehicle_id": 5,
+      "seat_index": 1
+    },
+    {
+      "name": "宸儀",
+      "vehicle_id": 5,
+      "seat_index": 2
+    },
+    {
+      "name": "惠雯",
+      "vehicle_id": 5,
+      "seat_index": 3
+    },
+    {
+      "name": "妍雯",
+      "vehicle_id": 3,
+      "seat_index": 0
+    },
+    {
+      "name": "季燕",
+      "vehicle_id": 3,
+      "seat_index": 1
+    },
+    {
+      "name": "宜珈",
+      "vehicle_id": 3,
+      "seat_index": 2
+    },
+    {
+      "name": "昇暉",
+      "vehicle_id": 4,
+      "seat_index": 0
+    },
+    {
+      "name": "泓政",
+      "vehicle_id": 4,
+      "seat_index": 1
+    },
+    {
+      "name": "詠霖",
+      "vehicle_id": 4,
+      "seat_index": 2
+    },
+    {
+      "name": "政榮",
+      "vehicle_id": 2,
+      "seat_index": 0
+    },
+    {
+      "name": "星甫",
+      "vehicle_id": 2,
+      "seat_index": 1
+    },
+    {
+      "name": "哲蒝",
+      "vehicle_id": 2,
+      "seat_index": 2
+    },
+    {
+      "name": "建佑",
+      "vehicle_id": 1,
+      "seat_index": 0
+    },
+    {
+      "name": "翔均",
+      "vehicle_id": 1,
+      "seat_index": 1
+    },
+    {
+      "name": "倍銓",
+      "vehicle_id": 1,
+      "seat_index": 2
+    },
+    {
+      "name": "宥紘",
+      "vehicle_id": 1,
+      "seat_index": 3
+    },
+    {
+      "name": "煌林",
+      "vehicle_id": 1,
+      "seat_index": 4
+    },
+    {
+      "name": "依萱",
+      "vehicle_id": 1,
+      "seat_index": 5
+    },
+    {
+      "name": "曼禕",
+      "vehicle_id": 1,
+      "seat_index": 6
+    }
+  ],
+  "settings": [
+    {
+      "key": "vehicle_count",
+      "value": "8"
+    },
+    {
+      "key": "vehicleCount",
+      "value": "6"
+    },
+    {
+      "key": "vehicleOwners",
+      "value": "{\"1\":\"公車\",\"2\":\"曾兄車\",\"3\":\"點傳師車\",\"4\":\"豆姐車\",\"5\":\"玉玲車\"}"
+    }
+  ],
+  "locks": [
+    {
+      "vehicle_id": 1,
+      "is_locked": 1
+    },
+    {
+      "vehicle_id": 2,
+      "is_locked": 1
+    },
+    {
+      "vehicle_id": 3,
+      "is_locked": 1
+    },
+    {
+      "vehicle_id": 4,
+      "is_locked": 1
+    },
+    {
+      "vehicle_id": 5,
+      "is_locked": 1
+    }
+  ]
+}

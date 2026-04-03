@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>車輛安排系統 V3 - 改進版 (PWA)</title>
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="js/db.js"></script>
+    <style>
+        /* 側邊欄樣式 */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: -320px;
+            /* 預設隱藏 */
+            width: 320px;
+            height: 100vh;
+            background: #fff;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: 0.3s;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: left;
+            overflow-y: auto;
+        }
+
+        #sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-toggle-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s;
+        }
+
+        body.sidebar-open .sidebar-toggle-btn {
+            left: 340px;
+        }
+
+        #sidebar h3 {
+            margin-top: 40px;
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+
+
+        .update-notes-container {
+            margin-top: 20px;
+        }
+
+        .update-notes-container textarea {
+            width: 100%;
+            height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            resize: vertical;
+            font-family: inherit;
+            box-sizing: border-box;
+            margin-top: 5px;
+        }
+
+        .update-notes-container textarea:focus {
+            outline: none;
+            border-color: #2196f3;
+        }
+
+        #content-wrapper {
+            transition: margin-left 0.3s;
+        }
+
+        body.sidebar-open #content-wrapper {
+            margin-left: 320px;
+        }
+
+        :root {
+            --male-color: #1976d2;
+            --male-bg: #e3f2fd;
+            --female-color: #c2185b;
+            --female-bg: #fce4ec;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            min-height: 100vh;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        /* 控制面板 */
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            margin: 0 5px;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        .import-btn {
+            background: #4caf50;
+            color: white;
+        }
+
+        .export-btn {
+            background: #2196f3;
+            color: white;
+        }
+
+        .export-excel-btn {
+            background: #4caf50;
+            color: white;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        /* 刪除/重置按鈕區 */
+        .action-buttons {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .delete-btn {
+            background: #ef5350;
+            color: white;
+        }
+
+        .reset-btn {
+            background: #ff9800;
+            color: white;
+        }
+
+        /* 名單區域 */
+        .lists {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .list {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            width: 350px;
+            min-height: 120px;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .list h4 {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* 拖拽元件樣式 */
+        .draggable {
+            padding: 8px 16px;
+            margin: 6px;
+            cursor: move;
+            border-radius: 25px;
+            display: inline-block;
+            font-weight: bold;
+            font-size: 14px;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, background 0.2s;
+            position: relative;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+
+        .draggable.selected {
+            box-shadow: 0 0 0 3px #ffd54f;
+            transform: scale(1.05);
+        }
+
+        .draggable.in-locked-vehicle {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .male {
+            background: var(--male-bg);
+            color: var(--male-color);
+            border: 1px solid #bbdefb;
+        }
+
+        .female {
+            background: var(--female-bg);
+            color: var(--female-color);
+            border: 1px solid #f8bbd0;
+        }
+
+        /* 車輛網格區域 */
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .vehicle {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            width: 280px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 2px solid transparent;
+            transition: 0.3s;
+        }
+
+        .vehicle.locked {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        .vehicle.locked .seat {
+            background: #dee2e6;
+            border-style: solid;
+            cursor: not-allowed;
+        }
+
+        .vehicle-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .vehicle-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .vehicle-owner-input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .vehicle-owner-input:focus {
+            outline: none;
+            border-color: #2196f3;
+        }
+
+        .lock-btn {
+            background: none;
+            border: 1px solid #ddd;
+            font-size: 18px;
+            padding: 5px 10px;
+            border-radius: 50%;
+        }
+
+        /* 座位配置 */
+        .seat-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .seat {
+            height: 55px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            font-size: 13px;
+            color: #a0aec0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body ondragover="event.preventDefault()" ondrop="dropToVoid(event)">
+
+    <!-- 側邊欄切換按鈕 -->
+    <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+        ☰ 展開功能選單
+    </button>
+
+    <!-- 側邊欄 -->
+    <div id="sidebar">
+        <h3>💾 進度儲存管理</h3>
+        <div
+            style="background: #e3f2fd; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+            <small style="color: #666;">可將目前的車位安排匯出成進度檔留存，或將先前的進度匯入接續作業。</small>
+            <button onclick="exportJSONBackup()"
+                style="background: #2196f3; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0;">💾
+                匯出進度檔 (JSON)</button>
+            <label
+                style="background: #ff9800; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; text-align: center; font-weight: bold;">
+                ⬇️ 匯入進度檔 (JSON)
+                <input type="file" accept=".json" onchange="importJSONBackup(event)" style="display: none;">
+            </label>
+        </div>
+
+        <h3>📝 系統更新公告 / 筆記板</h3>
+        <div class="update-notes-container">
+            <div id="notes-list" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <!-- 動態產生的公告會放在這 -->
+            </div>
+
+            <div id="notes-edit-mode">
+                <small style="color: #666; display: block; margin-bottom: 5px;">新增貼文（發布後會自動上傳疊加）：</small>
+                <textarea id="update-notes-area" placeholder="請輸入近期更新項目或備忘筆記..."></textarea>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <button onclick="publishUpdateNotes()"
+                        style="background: #4caf50; color: white; width: 100%; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">🚀
+                        發布貼文</button>
+                    <button id="cancel-edit-btn" onclick="cancelEditNote()"
+                        style="display: none; background: #9e9e9e; color: white; width: 100%; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">❌
+                        取消編輯</button>
+                </div>
+                <input type="hidden" id="editing-note-id" value="">
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要內容區 -->
+    <div id="content-wrapper">
+        <div class="controls">
+            <h2>🚗 車輛自動安排系統</h2>
+            <input type="text" id="nameInput" placeholder="請輸入姓名">
+            <button onclick="addPerson('male')" style="background: #bbdefb; color: #1976d2;">加入乾道</button>
+            <button onclick="addPerson('female')" style="background: #f8bbd0; color: #c2185b;">加入坤道</button>
+            <label style="margin-left: 15px;">車輛數:</label>
+            <select id="vehicleCount" onchange="saveVehicleCount()">
+                <option value="4">4 台</option>
+                <option value="6">6 台</option>
+                <option value="8">8 台</option>
+                <option value="10">10 台</option>
+            </select>
+            <br><br>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+
+                <label class="import-btn"
+                    style="cursor: pointer; display: inline-block; border-radius: 6px; font-weight: bold; background: #4caf50; color: white; padding: 10px 20px; line-height: normal; margin: 0 5px;">
+                    📥 匯入 Excel 名單
+                    <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="importExcel(event)"
+                        style="display: none;">
+                </label>
+                <button class="export-excel-btn" onclick="exportExcel()">📊 匯出 Excel (完整資料)</button>
+                <button class="export-btn" onclick="exportPNG()">📄 匯出 PNG 車位圖</button>
+            </div>
+            <small style="display: block; margin-top: 10px; color: #666;">
+                💡 Excel格式：第一欄=乾道、第二欄=坤道 | 匯出Excel可備份完整座位安排
+            </small>
+            <div class="action-buttons">
+                <button class="delete-btn" onclick="deleteSelected()">🗑️ 刪除選取人員</button>
+                <button class="reset-btn" onclick="resetSelected()">🔄 重置選取人員</button>
+                <small style="display: block; margin-top: 10px; color: #666;">點擊人員姓名可選取/取消選取</small>
+            </div>
+        </div>
+
+        <div class="lists">
+            <div class="list" id="maleList" ondrop="dropToList(event, 'male')" ondragover="allowDrop(event)">
+                <h4>👨 乾道名單 (待分配)</h4>
+            </div>
+            <div class="list" id="femaleList" ondrop="dropToList(event, 'female')" ondragover="allowDrop(event)">
+                <h4>👩 坤道名單 (待分配)</h4>
+            </div>
+        </div>
+
+        <div class="container" id="vehicle-container"></div>
+
+    </div> <!-- 結束 content-wrapper -->
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>
