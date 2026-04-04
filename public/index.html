@@ -351,14 +351,14 @@
             position: fixed;
             bottom: 15px;
             right: 15px;
-            text-align: right;
+            text-align: left;
             color: #999;
             font-size: 13px;
             z-index: 100;
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.7);
             padding: 5px 10px;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             pointer-events: none;
         }
     </style>
@@ -448,10 +448,10 @@
 
         <div class="lists">
             <div class="list" id="maleList" ondrop="dropToList(event, 'male')" ondragover="allowDrop(event)">
-                <h4>👨 乾道名單 (待分配)</h4>
+                <h4>乾道名單</h4>
             </div>
             <div class="list" id="femaleList" ondrop="dropToList(event, 'female')" ondragover="allowDrop(event)">
-                <h4>👩 坤道名單 (待分配)</h4>
+                <h4>坤道名單</h4>
             </div>
         </div>
 
@@ -460,8 +460,10 @@
     </div> <!-- 結束 content-wrapper -->
 
     <div class="version-info">
-        26.04.1 Beta<br>
-        已更新清除所有人員資訊
+        【26.04.1 Beta 版】<br>
+        💡 清除所有人員資訊<br>
+        💡 連同【未鎖定車輛】的「車主姓名」也一併清除<br>
+
     </div>
 
     <script src="js/main.js"></script>
