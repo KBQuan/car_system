@@ -346,6 +346,21 @@
             color: #a0aec0;
             overflow: hidden;
         }
+
+        .version-info {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            text-align: right;
+            color: #999;
+            font-size: 13px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -363,10 +378,10 @@
             style="background: #e3f2fd; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
             <small style="color: #666;">可將目前的車位安排匯出成進度檔留存，或將先前的進度匯入接續作業。</small>
             <button onclick="exportJSONBackup()"
-                style="background: #2196f3; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0;">💾
+                style="background: #2196f3; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 16px; font-weight: bold;">💾
                 匯出進度檔 (JSON)</button>
             <label
-                style="background: #ff9800; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; text-align: center; font-weight: bold;">
+                style="background: #ff9800; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; text-align: center; font-size: 16px; font-weight: bold;">
                 ⬇️ 匯入進度檔 (JSON)
                 <input type="file" accept=".json" onchange="importJSONBackup(event)" style="display: none;">
             </label>
@@ -443,6 +458,11 @@
         <div class="container" id="vehicle-container"></div>
 
     </div> <!-- 結束 content-wrapper -->
+
+    <div class="version-info">
+        26.04.1 Beta<br>
+        已更新清除所有人員資訊
+    </div>
 
     <script src="js/main.js"></script>
 </body>
