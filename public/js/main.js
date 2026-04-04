@@ -255,6 +255,33 @@ async function deleteSelected() {
     }
 }
 
+// 清除所有人員（包含名單列中，但忽略已鎖定車輛內的人員）
+async function clearAllPersons() {
+    const data = await window.appDB.getPassengersAndAssignments();
+    
+    // 找出所有未被鎖定的人員
+    const locks = await window.appDB.getLocks();
+    const lockMap = {};
+    locks.forEach(lock => {
+        lockMap[lock.vehicle_id] = lock.is_locked;
+    });
+
+    const peopleToDelete = data.filter(p => !p.vehicle_id || !lockMap[p.vehicle_id]);
+
+    if (peopleToDelete.length === 0) {
+        alert('沒有可以清除的人員（目前所有人員皆在已鎖定的車輛內）。');
+        return;
+    }
+
+    if (confirm(`確定要將這 ${peopleToDelete.length} 位人員(包含名單列及未鎖定車位的人員)從系統永久刪除嗎？`)) {
+        for (const p of peopleToDelete) {
+            await window.appDB.deletePassenger(p.name);
+            selectedPeople.delete(p.name);
+        }
+        init();
+    }
+}
+
 // 重置選取的人員
 async function resetSelected() {
     if (selectedPeople.size === 0) {
