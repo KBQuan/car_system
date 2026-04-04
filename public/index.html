@@ -388,15 +388,20 @@
         </div>
 
         <h3>📊 檔案匯出與匯入</h3>
-        <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+        <div
+            style="background: #e8f5e9; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
             <label class="import-btn"
                 style="cursor: pointer; display: block; border-radius: 6px; font-weight: bold; background: #4caf50; color: white; padding: 10px; line-height: normal; margin: 0; text-align: center; font-size: 16px;">
                 📥 匯入 Excel 名單
                 <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="importExcel(event)"
                     style="display: none;">
             </label>
-            <button class="export-excel-btn" onclick="exportExcel()" style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📊 匯出 Excel </button>
-            <button class="export-btn" onclick="exportPNG()" style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📄 匯出 PNG 車位圖</button>
+            <button class="export-excel-btn" onclick="exportExcel()"
+                style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📊
+                匯出 Excel </button>
+            <button class="export-btn" onclick="exportPNG()"
+                style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📄
+                匯出 PNG 車位圖</button>
             <small style="display: block; color: #666; padding-top: 5px;">
                 💡 Excel格式：第一欄=乾道、第二欄=坤道 | 匯出Excel可備份完整座位安排
             </small>
@@ -460,8 +465,8 @@
 
     <div class="version-info">
         【26.04.1 Beta 版】<br>
-        💡 清除所有人員資訊<br>
-        💡 連同【未鎖定車輛】的「車主姓名」也一併清除<br>
+        💡 將匯出/匯入 功能列整合<br>
+        💡 設置了重置按鈕<br>
 
     </div>
 
