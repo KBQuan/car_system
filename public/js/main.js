@@ -143,7 +143,10 @@ function renderVehicleFramework(lockMap = {}, ownerMap = {}) {
             <div class="vehicle-header">
                 <div class="vehicle-title-row">
                     <strong>🚐 第 ${i} 車</strong>
-                    <button class="lock-btn" onclick="toggleLock(${i})">${lockIcon}</button>
+                    <div>
+                        <button class="reset-vehicle-btn" onclick="resetVehicle(${i})" style="background: none; border: 1px solid #ddd; font-size: 18px; padding: 5px 10px; border-radius: 50%; cursor: pointer; color: #ff9800; margin-right: 5px;" title="重置該車輛">🔄</button>
+                        <button class="lock-btn" onclick="toggleLock(${i})">${lockIcon}</button>
+                    </div>
                 </div>
                 <input type="text" class="vehicle-owner-input" 
                        placeholder="輸入車主姓名" 
@@ -300,33 +303,21 @@ async function clearAllPersons() {
     }
 }
 
-// 重置選取的人員
-async function resetSelected() {
-    if (selectedPeople.size === 0) {
-        alert('請先選取要重置的人員');
+// 重置該車輛的所有人員
+async function resetVehicle(vehicleId) {
+    const data = await window.appDB.getPassengersAndAssignments();
+    const passengersInCar = data.filter(p => p.vehicle_id == vehicleId);
+
+    if (passengersInCar.length === 0) {
+        alert('此車輛目前沒有人員可以重置');
         return;
     }
-    
-    let hasLockedPerson = false;
-    for (const name of selectedPeople) {
-        const personEl = document.getElementById(`person-${name}`);
-        if (personEl?.closest('.vehicle.locked')) {
-            hasLockedPerson = true;
-            break;
+
+    if (confirm(`確定要重新分配第 ${vehicleId} 車的 ${passengersInCar.length} 位人員嗎？ (將回到待分配名單)`)) {
+        for (const p of passengersInCar) {
+            await window.appDB.removeAssignment(p.name);
+            selectedPeople.delete(p.name);
         }
-    }
-    
-    if (hasLockedPerson) {
-        alert('選取的人員中有些在已鎖定的車輛內，無法重置！');
-        return;
-    }
-    
-    const names = Array.from(selectedPeople).join('、');
-    if (confirm(`確定要重置以下人員的座位安排嗎?\n\n${names}`)) {
-        for (const name of selectedPeople) {
-            await window.appDB.removeAssignment(name);
-        }
-        selectedPeople.clear();
         init();
     }
 }
@@ -598,6 +589,7 @@ window.deleteNote = deleteNote;
 window.exportPNG = exportPNG;
 window.exportJSONBackup = exportJSONBackup;
 window.importJSONBackup = importJSONBackup;
+window.resetVehicle = resetVehicle;
 
 // 頁面開啟時啟動
 window.onload = init;
