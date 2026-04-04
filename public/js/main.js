@@ -278,6 +278,24 @@ async function clearAllPersons() {
             await window.appDB.deletePassenger(p.name);
             selectedPeople.delete(p.name);
         }
+        
+        if (confirm('是否要連同【未鎖定車輛】的「車主姓名」也一併清除？')) {
+            const ownersData = await window.appDB.getSetting('vehicleOwners');
+            if (ownersData && ownersData.value) {
+                const ownerMap = JSON.parse(ownersData.value);
+                let ownerUpdated = false;
+                for (const vId in ownerMap) {
+                    if (!lockMap[vId]) { // 中略已鎖定車輛的車主
+                        delete ownerMap[vId];
+                        ownerUpdated = true;
+                    }
+                }
+                if (ownerUpdated) {
+                    await window.appDB.saveSetting('vehicleOwners', JSON.stringify(ownerMap));
+                }
+            }
+        }
+        
         init();
     }
 }
