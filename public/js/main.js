@@ -44,13 +44,13 @@ async function init() {
 
         // 載入人員資料與分配結果
         const data = await window.appDB.getPassengersAndAssignments();
-        
+
         // 1. 繪製車輛框架
         renderVehicleFramework(lockMap, ownerMap);
 
         // 2. 清空名單顯示區
-        document.getElementById('maleList').innerHTML = '<h4>👨 乾道名單 (待分配)</h4>';
-        document.getElementById('femaleList').innerHTML = '<h4>👩 坤道名單 (待分配)</h4>';
+        document.getElementById('maleList').innerHTML = '<h4>👨 乾道名單</h4>';
+        document.getElementById('femaleList').innerHTML = '<h4>👩 坤道名單</h4>';
 
         // 3. 分配人員到對應位置
         data.forEach(p => {
@@ -83,13 +83,13 @@ function createPersonElement(name, gender) {
     el.draggable = true;
     el.id = "person-" + name;
     el.dataset.gender = gender;
-    
+
     // 點擊選取/取消選取
     el.onclick = (e) => {
         e.stopPropagation();
         const isInLocked = e.target.closest('.vehicle')?.classList.contains('locked');
         if (isInLocked) return;
-        
+
         if (selectedPeople.has(name)) {
             selectedPeople.delete(name);
             el.classList.remove('selected');
@@ -98,7 +98,7 @@ function createPersonElement(name, gender) {
             el.classList.add('selected');
         }
     };
-    
+
     el.ondragstart = (e) => {
         const isLocked = e.target.closest('.vehicle')?.classList.contains('locked');
         if (isLocked) {
@@ -108,7 +108,7 @@ function createPersonElement(name, gender) {
         draggedPersonGender = gender;
         e.dataTransfer.setData('text/plain', name);
     };
-    
+
     // 檢查是否在鎖定車輛內
     setTimeout(() => {
         const isInLocked = el.closest('.vehicle')?.classList.contains('locked');
@@ -117,7 +117,7 @@ function createPersonElement(name, gender) {
             el.draggable = false;
         }
     }, 0);
-    
+
     return el;
 }
 
@@ -131,14 +131,14 @@ function renderVehicleFramework(lockMap = {}, ownerMap = {}) {
         const v = document.createElement('div');
         v.className = 'vehicle';
         v.id = `vehicle-${i}`;
-        
+
         if (lockMap[i]) {
             v.classList.add('locked');
         }
-        
+
         const lockIcon = lockMap[i] ? '🔒' : '🔓';
         const ownerName = ownerMap[i] || '';
-        
+
         v.innerHTML = `
             <div class="vehicle-header">
                 <div class="vehicle-title-row">
@@ -179,7 +179,7 @@ async function saveVehicleCount() {
 async function saveVehicleOwner(vehicleId, ownerName) {
     const data = await window.appDB.getSetting('vehicleOwners');
     const ownerMap = data.value ? JSON.parse(data.value) : {};
-    
+
     ownerMap[vehicleId] = ownerName;
     await window.appDB.saveSetting('vehicleOwners', JSON.stringify(ownerMap));
 }
@@ -216,7 +216,7 @@ async function handleSeatDrop(e, vId, sIdx) {
 // 處理:掉在空白處視同「移除安排」
 async function dropToVoid(e) {
     if (e.target.closest('.seat') || e.target.closest('.list')) return;
-    
+
     const name = e.dataTransfer.getData('text/plain');
     if (name) {
         await window.appDB.removeAssignment(name);
@@ -231,11 +231,11 @@ async function dropToList(e, targetGender) {
     const name = e.dataTransfer.getData('text/plain');
     if (name) {
         await window.appDB.removeAssignment(name);
-        
+
         if (draggedPersonGender && draggedPersonGender !== targetGender) {
             await window.appDB.updatePassengerGender(name, targetGender);
         }
-        
+
         draggedPersonGender = null;
         init();
     }
@@ -247,7 +247,7 @@ async function deleteSelected() {
         alert('請先選取要刪除的人員');
         return;
     }
-    
+
     const names = Array.from(selectedPeople).join('、');
     if (confirm(`確定要將以下人員從資料庫永久刪除嗎?\n\n${names}`)) {
         for (const name of selectedPeople) {
@@ -261,7 +261,7 @@ async function deleteSelected() {
 // 清除所有人員（包含名單列中，但忽略已鎖定車輛內的人員）
 async function clearAllPersons() {
     const data = await window.appDB.getPassengersAndAssignments();
-    
+
     // 找出所有未被鎖定的人員
     const locks = await window.appDB.getLocks();
     const lockMap = {};
@@ -281,7 +281,7 @@ async function clearAllPersons() {
             await window.appDB.deletePassenger(p.name);
             selectedPeople.delete(p.name);
         }
-        
+
         if (confirm('是否要連同【未鎖定車輛】的「車主姓名」也一併清除？')) {
             const ownersData = await window.appDB.getSetting('vehicleOwners');
             if (ownersData && ownersData.value) {
@@ -298,7 +298,7 @@ async function clearAllPersons() {
                 }
             }
         }
-        
+
         init();
     }
 }
@@ -328,7 +328,7 @@ async function toggleLock(id) {
     const btn = v.querySelector('.lock-btn');
     const isLocked = v.classList.toggle('locked');
     btn.innerText = isLocked ? '🔒' : '🔓';
-    
+
     await window.appDB.saveLock(id, isLocked ? 1 : 0);
 }
 
@@ -338,7 +338,7 @@ async function importExcel(event) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = async function(e) {
+    reader.onload = async function (e) {
         try {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
@@ -346,19 +346,19 @@ async function importExcel(event) {
             const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
             let importCount = 0;
-            
+
             for (let i = 0; i < jsonData.length; i++) {
                 const row = jsonData[i];
                 if (i === 0 && (row[0] === '乾道' || row[0] === '姓名')) continue;
-                
+
                 if (row[0] && row[0].toString().trim()) {
                     const name = row[0].toString().trim();
-                    try { await window.appDB.addPassenger(name, 'male'); importCount++; } catch(e){}
+                    try { await window.appDB.addPassenger(name, 'male'); importCount++; } catch (e) { }
                 }
-                
+
                 if (row[1] && row[1].toString().trim()) {
                     const name = row[1].toString().trim();
-                    try { await window.appDB.addPassenger(name, 'female'); importCount++; } catch(e){}
+                    try { await window.appDB.addPassenger(name, 'female'); importCount++; } catch (e) { }
                 }
             }
 
@@ -387,20 +387,20 @@ async function exportExcel() {
             const vehicle = p.vehicle_id ? `第 ${p.vehicle_id} 車` : '未分配';
             const seat = p.vehicle_id ? `座位 ${p.seat_index + 1}` : '-';
             const owner = p.vehicle_id ? (ownerMap[p.vehicle_id] || '-') : '-';
-            
+
             ws_data.push([p.name, gender, vehicle, seat, owner]);
         });
 
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet(ws_data);
-        
+
         ws['!cols'] = [{ wch: 12 }, { wch: 8 }, { wch: 12 }, { wch: 10 }, { wch: 12 }];
-        
+
         XLSX.utils.book_append_sheet(wb, ws, '車輛安排');
-        
+
         const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         XLSX.writeFile(wb, `車輛安排_${date}.xlsx`);
-        
+
         alert('✅ Excel 匯出成功！');
     } catch (err) {
         console.error(err);
@@ -419,7 +419,7 @@ async function exportPNG() {
         const endElement = document.getElementById('vehicle-container');
         const tempContainer = document.createElement('div');
         tempContainer.style.cssText = 'background: #f4f7f9; padding: 20px; width: 1200px; max-width: 1200px; box-sizing: border-box; margin: 0 auto; overflow: visible; font-family: sans-serif; display: flex; flex-direction: column; align-items: center;';
-        
+
         tempContainer.appendChild(endElement.cloneNode(true));
         document.body.appendChild(tempContainer);
 
@@ -434,13 +434,13 @@ async function exportPNG() {
         selected.forEach(el => el.classList.add('selected'));
 
         const imgData = canvas.toDataURL('image/png');
-        
+
         const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         const link = document.createElement('a');
         link.download = `車位安排圖_${date}.png`;
         link.href = imgData;
         link.click();
-        
+
         alert('✅ PNG 圖片匯出成功！');
     } catch (err) {
         console.error(err);
@@ -461,7 +461,7 @@ let updateNotesList = [];
 function renderUpdateNotes() {
     const listDiv = document.getElementById('notes-list');
     listDiv.innerHTML = '';
-    
+
     if (updateNotesList.length === 0) {
         listDiv.innerHTML = '<div style="color: #999; font-size: 13px; text-align: center; padding: 10px;">目前尚無任何更新公告</div>';
         return;
@@ -489,7 +489,7 @@ async function publishUpdateNotes() {
     if (!text) return;
 
     const editId = document.getElementById('editing-note-id').value;
-    
+
     if (editId) {
         // 編輯模式
         const note = updateNotesList.find(n => n.id == editId);
@@ -544,13 +544,13 @@ async function exportJSONBackup() {
         const jsonStr = JSON.stringify(dbData, null, 2);
         const blob = new Blob([jsonStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        
+
         const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         const link = document.createElement('a');
         link.download = `車位安排進度_${date}.json`;
         link.href = url;
         link.click();
-        
+
         URL.revokeObjectURL(url);
     } catch (e) {
         alert('❌ 匯出失敗');
@@ -564,7 +564,7 @@ async function importJSONBackup(event) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = async function(e) {
+    reader.onload = async function (e) {
         try {
             const data = JSON.parse(e.target.result);
             await window.appDB.importData(data);
