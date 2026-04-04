@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>車輛安排系統 V3 - 改進版 (PWA)</title>
+    <title>車輛自動安排系統</title>
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -184,7 +184,7 @@
         }
 
         .delete-btn {
-            background: #ef5350;
+            background: #ff9800;
             color: white;
         }
 
@@ -387,6 +387,21 @@
             </label>
         </div>
 
+        <h3>📊 檔案匯出與匯入</h3>
+        <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+            <label class="import-btn"
+                style="cursor: pointer; display: block; border-radius: 6px; font-weight: bold; background: #4caf50; color: white; padding: 10px; line-height: normal; margin: 0; text-align: center; font-size: 16px;">
+                📥 匯入 Excel 名單
+                <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="importExcel(event)"
+                    style="display: none;">
+            </label>
+            <button class="export-excel-btn" onclick="exportExcel()" style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📊 匯出 Excel </button>
+            <button class="export-btn" onclick="exportPNG()" style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📄 匯出 PNG 車位圖</button>
+            <small style="display: block; color: #666; padding-top: 5px;">
+                💡 Excel格式：第一欄=乾道、第二欄=坤道 | 匯出Excel可備份完整座位安排
+            </small>
+        </div>
+
         <h3>📝 系統更新公告 / 筆記板</h3>
         <div class="update-notes-container">
             <div id="notes-list" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
@@ -423,25 +438,9 @@
                 <option value="8">8 台</option>
                 <option value="10">10 台</option>
             </select>
-            <br><br>
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-
-                <label class="import-btn"
-                    style="cursor: pointer; display: inline-block; border-radius: 6px; font-weight: bold; background: #4caf50; color: white; padding: 10px 20px; line-height: normal; margin: 0 5px;">
-                    📥 匯入 Excel 名單
-                    <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="importExcel(event)"
-                        style="display: none;">
-                </label>
-                <button class="export-excel-btn" onclick="exportExcel()">📊 匯出 Excel </button>
-                <button class="export-btn" onclick="exportPNG()">📄 匯出 PNG 車位圖</button>
-            </div>
-            <small style="display: block; margin-top: 10px; color: #666;">
-                💡 Excel格式：第一欄=乾道、第二欄=坤道 | 匯出Excel可備份完整座位安排
-            </small>
             <div class="action-buttons">
                 <button class="delete-btn" onclick="deleteSelected()">🗑️ 刪除選取人員</button>
-                <button class="delete-btn" onclick="clearAllPersons()">🗑️ 清除所有人員</button>
-                <button class="reset-btn" onclick="resetSelected()">🔄 重置選取人員</button>
+                <button class="delete-btn" onclick="clearAllPersons()" style="background: #ef5350;">🗑️ 清除所有人員</button>
                 <small style="display: block; margin-top: 10px; color: #666;">點擊人員姓名可選取/取消選取</small>
             </div>
         </div>
