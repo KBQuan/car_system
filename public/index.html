@@ -361,6 +361,72 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             pointer-events: none;
         }
+
+        /* Modal 樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 25px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .close-modal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            right: 20px;
+            top: 15px;
+        }
+
+        .close-modal:hover,
+        .close-modal:focus {
+            color: #333;
+            text-decoration: none;
+        }
+
+        .manual-body {
+            max-height: 60vh;
+            overflow-y: auto;
+            text-align: left;
+            line-height: 1.6;
+        }
+
+        .manual-body h3 {
+            color: #1976d2;
+            border-bottom: 2px solid #e3f2fd;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        .manual-body ul {
+            padding-left: 20px;
+            font-size: 15px;
+        }
+
+        .manual-body li {
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 
@@ -373,6 +439,14 @@
 
     <!-- 側邊欄 -->
     <div id="sidebar">
+        <h3>📖 使用說明</h3>
+        <div
+            style="background: #fff3e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+            <button onclick="openManual()"
+                style="background: #ffb74d; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 16px; font-weight: bold;">📖
+                閱讀使用說明書</button>
+        </div>
+
         <h3>💾 進度儲存管理</h3>
         <div
             style="background: #e3f2fd; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
@@ -407,7 +481,7 @@
             </small>
         </div>
 
-        <h3>📝筆記板</h3>
+        <h3>📝 系統更新公告 / 筆記板</h3>
         <div class="update-notes-container">
             <div id="notes-list" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
                 <!-- 動態產生的公告會放在這 -->
@@ -463,14 +537,63 @@
 
     </div> <!-- 結束 content-wrapper -->
 
+    <!-- 使用說明書 Modal -->
+    <div id="manualModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeManual()">&times;</span>
+            <h2 style="margin-top: 0; text-align: left;"><span style="font-size: 24px;">📖</span> 使用說明書</h2>
+            <div class="manual-body">
+                <h3>1. 人員管理</h3>
+                <ul>
+                    <li><strong>新增人員：</strong>在上方輸入姓名並點擊「加入乾道」或「加入坤道」。</li>
+                    <li><strong>選取人員：</strong>點擊名單或座位上的人員即可選取（黃色外框），再次點擊取消選取。</li>
+                    <li><strong>刪除人員：</strong>選取後，點擊「🗑️ 刪除選取人員」。</li>
+                    <li><strong>清除全部：</strong>點擊「🗑️ 清除所有人員」，將刪除全部「未鎖定」的車主與人員。</li>
+                </ul>
+                <h3>2. 車位安排</h3>
+                <ul>
+                    <li><strong>拖曳安排：</strong>將人員從名單拖曳至車輛座位中即完成安排。</li>
+                    <li><strong>取消安排：</strong>將人員從座位拖回名單，或拖至空白處放開即可。</li>
+                    <li><strong>重置車輛：</strong>點擊該車輛標題旁的「🔄」，可將該車人員全部退回名單。</li>
+                    <li><strong>鎖定車輛：</strong>點擊「🔓/🔒」可鎖定該車（顯示灰底），鎖定後人員無法移出或移入。</li>
+                    <li><strong>車主設定：</strong>在車輛標題下方輸入框，可為該車設定車主姓名。</li>
+                </ul>
+                <h3>3. 系統功能</h3>
+                <ul>
+                    <li><strong>功能選單（左上角 ☰）：</strong>點開後可看到進一步的操作功能。</li>
+                    <li><strong>進度儲存 (JSON)：</strong>匯出目前的安排進度（存為檔案），下次可在此匯入繼續作業。</li>
+                    <li><strong>檔案匯出：</strong>支援將目前的車位安排匯出成「Excel 名單」與「PNG 車位圖」。</li>
+                    <li><strong>匯入 Excel：</strong>可一次大量匯入人員（Excel 第一欄為乾道，第二欄為坤道）。</li>
+                    <li><strong>系統公告板：</strong>可在側邊欄新增備忘錄與公告，會與系統進度一併儲存。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
     <div class="version-info">
-        【26.04.2 Beta 版】<br>
+        【26.04.1 Beta 版】<br>
         💡 將匯出/匯入 功能列整合<br>
         💡 設置了重置按鈕<br>
 
     </div>
 
     <script src="js/main.js"></script>
+    <script>
+        function openManual() {
+            document.getElementById('manualModal').style.display = "block";
+        }
+
+        function closeManual() {
+            document.getElementById('manualModal').style.display = "none";
+        }
+
+        window.addEventListener('click', function (event) {
+            let modal = document.getElementById('manualModal');
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        });
+    </script>
 </body>
 
 </html>
