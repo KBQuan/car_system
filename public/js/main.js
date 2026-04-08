@@ -127,7 +127,18 @@ function renderVehicleFramework(lockMap = {}, ownerMap = {}) {
     container.innerHTML = '';
     const count = document.getElementById('vehicleCount').value;
 
+    const vehicleIds = [];
     for (let i = 1; i <= count; i++) {
+        vehicleIds.push(i);
+    }
+    vehicleIds.sort((a, b) => {
+        const aLocked = !!lockMap[a];
+        const bLocked = !!lockMap[b];
+        if (aLocked === bLocked) return a - b;
+        return aLocked ? 1 : -1;
+    });
+
+    for (const i of vehicleIds) {
         const v = document.createElement('div');
         v.className = 'vehicle';
         v.id = `vehicle-${i}`;
@@ -330,6 +341,23 @@ async function toggleLock(id) {
     btn.innerText = isLocked ? '🔒' : '🔓';
 
     await window.appDB.saveLock(id, isLocked ? 1 : 0);
+
+    // 將車輛依鎖定狀態與編號重新排序，鎖定的車輛移至最後
+    const container = document.getElementById('vehicle-container');
+    const vehicles = Array.from(container.children);
+    vehicles.sort((a, b) => {
+        const aLocked = a.classList.contains('locked');
+        const bLocked = b.classList.contains('locked');
+        const aId = parseInt(a.id.replace('vehicle-', ''));
+        const bId = parseInt(b.id.replace('vehicle-', ''));
+
+        if (aLocked === bLocked) {
+            return aId - bId;
+        }
+        return aLocked ? 1 : -1;
+    });
+
+    vehicles.forEach(veh => container.appendChild(veh));
 }
 
 // 匯入 Excel 功能
