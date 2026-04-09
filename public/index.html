@@ -348,18 +348,11 @@
         }
 
         .version-info {
-            position: fixed;
-            bottom: 15px;
-            right: 15px;
-            text-align: left;
+            text-align: center;
             color: #999;
             font-size: 13px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.7);
-            padding: 5px 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            pointer-events: none;
+            padding: 40px 10px 20px 10px;
+            margin-top: 20px;
         }
 
         /* Modal 樣式 */
@@ -434,7 +427,7 @@
 
     <!-- 側邊欄切換按鈕 -->
     <button class="sidebar-toggle-btn" onclick="toggleSidebar()">
-        ☰ 功能列
+        ☰
     </button>
 
     <!-- 側邊欄 -->
@@ -476,9 +469,7 @@
             <button class="export-btn" onclick="exportPNG()"
                 style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📄
                 匯出 PNG 車位圖</button>
-            <small style="display: block; color: #666; padding-top: 5px;">
-                💡 Excel格式：第一欄=乾道、第二欄=坤道 | 匯出Excel可備份完整座位安排
-            </small>
+
         </div>
 
         <h3>📝筆記板</h3>
@@ -488,7 +479,7 @@
             </div>
 
             <div id="notes-edit-mode">
-                <small style="color: #666; display: block; margin-bottom: 5px;">新增貼文（發布後會自動上傳疊加）：</small>
+                <small style="color: #666; display: block; margin-bottom: 5px;">新增貼文：</small>
                 <textarea id="update-notes-area" placeholder="請輸入近期更新項目或備忘筆記..."></textarea>
                 <div style="display: flex; gap: 5px; margin-top: 5px;">
                     <button onclick="publishUpdateNotes()"
@@ -570,13 +561,6 @@
         </div>
     </div>
 
-    <div class="version-info">
-        【26.04.3 Beta 版】<br>
-        💡 車輛鎖定後動態重新排序<br>
-        💡 新增使用說明於功能列中<br>
-
-    </div>
-
     <script src="js/main.js"></script>
     <script>
         function openManual() {
@@ -594,6 +578,10 @@
             }
         });
     </script>
+
+    <div class="version-info">
+        26.04.3 Beta 版™
+    </div>
 </body>
 
 </html>
