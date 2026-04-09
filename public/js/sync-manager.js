@@ -149,10 +149,12 @@ class SyncManager {
                 const { error } = await this.supabase.from(table).delete().eq('room_id', this.currentRoom);
                 if (error) throw error;
             }
+            console.log(`[Sync] ☁️ 已成功即時傳送變動 (${table})`);
         } catch (err) {
-            console.warn(`[Sync] 雲端同步失敗 (${table}):`, err);
+            console.warn(`[Sync] ❌ 雲端同步失敗 (${table}):`, err.message);
         } finally {
-            this.isSyncing = false;
+            // 稍微延遲釋放標記，確保能過濾掉 Supabase 回傳的同一個變動事件（避免無線循環重新渲染）
+            setTimeout(() => { this.isSyncing = false; }, 100);
         }
     }
 
