@@ -15,8 +15,14 @@ async function init() {
     try {
         await window.appDB.init();
 
-        // Initialize Google Sync if available
-        if (window.initGoogleSync) window.initGoogleSync();
+        // Initialize Supabase Sync if available
+        if (window.syncManager && !window.syncManager.started) {
+            window.syncManager.started = true;
+            await window.syncManager.init();
+            // 如果 syncManager 成功加入了房間，它會自己再呼叫一次 init()
+            // 如果沒加入房間（沒 room 參數），則繼續執行下方的本地加載
+            if (window.syncManager.currentRoom) return;
+        }
 
         // 載入車輛數設定
         const vehicleCountData = await window.appDB.getSetting('vehicleCount');

@@ -131,24 +131,34 @@ class AppDB {
 
     async addPassenger(name, gender) {
         await this._addIfNotExist('passengers', { name, gender });
+        if (window.syncManager) await window.syncManager.pushChange('passengers', 'put', { name, gender });
     }
 
     async updatePassengerGender(name, gender) {
         // 如果跨性別拖曳，更新性別 (由 db.put 直接覆蓋)
-        await this._put('passengers', { name, gender });
+        const data = { name, gender };
+        await this._put('passengers', data);
+        if (window.syncManager) await window.syncManager.pushChange('passengers', 'put', data);
     }
 
     async saveAssignment(name, vehicle_id, seat_index) {
-        await this._put('assignments', { name, vehicle_id, seat_index });
+        const data = { name, vehicle_id, seat_index };
+        await this._put('assignments', data);
+        if (window.syncManager) await window.syncManager.pushChange('assignments', 'put', data);
     }
 
     async removeAssignment(name) {
         await this._delete('assignments', name);
+        if (window.syncManager) await window.syncManager.pushChange('assignments', 'delete', name);
     }
 
     async deletePassenger(name) {
         await this._delete('passengers', name);
         await this._delete('assignments', name);
+        if (window.syncManager) {
+            await window.syncManager.pushChange('passengers', 'delete', name);
+            await window.syncManager.pushChange('assignments', 'delete', name);
+        }
     }
 
     async getSetting(key) {
@@ -157,7 +167,9 @@ class AppDB {
     }
 
     async saveSetting(key, value) {
-        await this._put('settings', { key, value });
+        const data = { key, value };
+        await this._put('settings', data);
+        if (window.syncManager) await window.syncManager.pushChange('settings', 'put', data);
     }
 
     async getLocks() {
@@ -165,7 +177,9 @@ class AppDB {
     }
 
     async saveLock(vehicle_id, is_locked) {
-        await this._put('locks', { vehicle_id, is_locked });
+        const data = { vehicle_id, is_locked };
+        await this._put('locks', data);
+        if (window.syncManager) await window.syncManager.pushChange('locks', 'put', data);
     }
 
     // --- 資料庫匯出與匯入 ---
