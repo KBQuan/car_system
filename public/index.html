@@ -13,7 +13,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/db.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/sync-manager.js"></script>
     <style>
         /* 側邊欄樣式 */
         #sidebar {
@@ -440,6 +443,22 @@
                 閱讀使用說明書</button>
         </div>
 
+        <h3>🌐 多人即時協作</h3>
+        <div
+            style="background: #f3e5f5; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+            <small style="color: #666;">輸入房間 ID 以加入共編，或分享目前的網址給他人。</small>
+            <input type="text" id="roomIdInput" placeholder="輸入房間名稱或 ID" style="width: 100%; box-sizing: border-box;">
+            <button onclick="joinRoom()"
+                style="background: #9c27b0; color: white; width: 100%; margin: 0; padding: 10px; border-radius: 6px;">🔗
+                加入/建立房間</button>
+            <div id="roomStatus"
+                style="font-size: 12px; color: #7b1fa2; font-weight: bold; text-align: center; display: none;">
+                同步中：<span id="activeRoomId"></span>
+                <button onclick="leaveRoom()"
+                    style="background: #ef5350; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; margin-left: 10px; font-size: 11px;">退出同步</button>
+            </div>
+        </div>
+
         <h3>💾 進度儲存管理</h3>
         <div
             style="background: #e3f2fd; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
@@ -556,6 +575,13 @@
                     <li><strong>檔案匯出：</strong>支援將目前的車位安排匯出成「Excel 名單」與「PNG 車位圖」。</li>
                     <li><strong>匯入 Excel：</strong>可一次大量匯入人員（Excel 第一欄為乾道，第二欄為坤道）。</li>
                     <li><strong>系統公告板：</strong>可在側邊欄新增備忘錄與公告，會與系統進度一併儲存。</li>
+                </ul>
+                <h3>4. 多人即時協作</h3>
+                <ul>
+                    <li><strong>開啟協作：</strong>在側邊欄進入「多人即時協作」，輸入「房間 ID」並點擊加入。</li>
+                    <li><strong>即時同步：</strong>加入房間後，所有人的操作（如拖曳人員、鎖定車位、更新筆記等）都會立即同步到其他人的畫面上。</li>
+                    <li><strong>分享連結：</strong>加入房間後，直接分享網址（包含 ?room=房間 ID）給其他人即可讓他們進入同一個協作空間。</li>
+                    <li><strong>離線備份：</strong>即使在協作模式，您仍可以使用「進度儲存 (JSON)」功能將資料備份到本地電腦。</li>
                 </ul>
             </div>
         </div>
