@@ -1,15 +1,15 @@
-// js/sync-manager.js - 處理 Supabase 與本地 IndexedDB 的即時同步
+// js/sync-manager.js - 處理 Supabase 與本地 IndexedDB 的即時同步 (修復版)
 
 class SyncManager {
     constructor() {
         this.currentRoom = null;
         this.supabase = null;
-        this.isSyncing = false; // 防止循環同步
+        this.isSyncing = false;
+        this.started = false; 
     }
 
     async init() {
         this.supabase = window.getSupabase();
-        // 檢查 URL 是否有房間 ID
         const params = new URLSearchParams(window.location.search);
         const roomId = params.get('room');
         if (roomId) {
@@ -22,30 +22,45 @@ class SyncManager {
         if (!roomId) return;
         this.supabase = window.getSupabase();
         if (!this.supabase) {
-            console.error("Supabase 未配置，無法開啟協作模式");
+            console.error("[Sync] Supabase 客戶端未建立");
             return;
         }
 
-        this.currentRoom = roomId;
-        console.log(`[Sync] 加入房間: ${this.currentRoom}`);
+        try {
+            console.log(`[Sync] 正在連接至房間: ${roomId}`);
+            
+            // 1. 確保房間已存在 (雲端自動註冊)
+            const { error: roomError } = await this.supabase
+                .from('rooms')
+                .upsert({ id: roomId, name: roomId }, { onConflict: 'id' });
+            
+            if (roomError) throw roomError;
 
-        // 1. 更新 UI 狀態
-        document.getElementById('roomStatus').style.display = 'block';
-        document.getElementById('activeRoomId').textContent = this.currentRoom;
+            this.currentRoom = roomId;
 
-        // 2. 從遠端撈取最新資料並覆寫本地
-        await this.pullFromRemote();
+            // 2. 更新 UI
+            document.getElementById('roomStatus').style.display = 'block';
+            document.getElementById('activeRoomId').textContent = this.currentRoom;
 
-        // 3. 開啟即時監聽
-        this.subscribeToChanges();
+            // 3. 從遠端撈取完整資料並同步到本地
+            await this.pullFromRemote();
 
-        // 4. 更新網址列
-        const url = new URL(window.location);
-        url.searchParams.set('room', this.currentRoom);
-        window.history.pushState({}, '', url);
+            // 4. 開啟各資料表的即時監聽
+            this.subscribeToChanges();
 
-        // 5. 觸發介面初始化
-        if (window.init) window.init();
+            // 5. 更新網址列
+            const url = new URL(window.location);
+            url.searchParams.set('room', this.currentRoom);
+            window.history.pushState({}, '', url);
+
+            // 6. 重新初始化介面
+            if (window.init) window.init();
+            
+            console.log(`[Sync] 成功進入房間: ${this.currentRoom}`);
+        } catch (err) {
+            console.error("[Sync] 加入房間失敗:", err);
+            alert("同步連線失敗，請檢查 API Key 或網路狀態");
+        }
     }
 
     async pullFromRemote() {
@@ -53,10 +68,10 @@ class SyncManager {
         
         try {
             const [
-                { data: passengers },
-                { data: assignments },
-                { data: settings },
-                { data: locks }
+                { data: p }, 
+                { data: a }, 
+                { data: s }, 
+                { data: l }
             ] = await Promise.all([
                 this.supabase.from('passengers').select('*').eq('room_id', this.currentRoom),
                 this.supabase.from('assignments').select('*').eq('room_id', this.currentRoom),
@@ -64,28 +79,31 @@ class SyncManager {
                 this.supabase.from('locks').select('*').eq('room_id', this.currentRoom)
             ]);
 
-            // 格式轉換並導入本地 DB
             await window.appDB.importData({
-                passengers: passengers || [],
-                assignments: assignments || [],
-                settings: settings || [],
-                locks: locks || []
+                passengers: p || [],
+                assignments: a || [],
+                settings: s || [],
+                locks: l || []
             });
         } catch (err) {
-            console.error("[Sync] 下載資料失敗:", err);
+            console.error("[Sync] 初始同步下載失敗:", err);
         }
     }
 
     subscribeToChanges() {
+        if (!this.supabase || !this.currentRoom) return;
+
+        // 清除舊頻道
+        this.supabase.removeAllChannels();
+
         const tables = ['passengers', 'assignments', 'settings', 'locks'];
-        
         tables.forEach(table => {
             this.supabase
-                .channel(`room-${this.currentRoom}-${table}`)
+                .channel(`public:${table}:${this.currentRoom}`)
                 .on('postgres_changes', 
                     { event: '*', schema: 'public', table: table, filter: `room_id=eq.${this.currentRoom}` }, 
                     (payload) => {
-                        console.log(`[Sync] 收到 ${table} 變動:`, payload);
+                        console.debug(`[Sync] 收到遠端變動 (${table}):`, payload);
                         this.handleRemoteChange(table, payload);
                     }
                 )
@@ -98,8 +116,6 @@ class SyncManager {
 
         const { eventType, new: newRow, old: oldRow } = payload;
         
-        // 更新本地 IndexedDB
-        // 為了避免複雜的狀態比對，這裡直接根據事件執行對應的 db 操作
         try {
             if (eventType === 'INSERT' || eventType === 'UPDATE') {
                 if (table === 'passengers') await window.appDB._put('passengers', { name: newRow.name, gender: newRow.gender });
@@ -110,11 +126,9 @@ class SyncManager {
                 const key = table === 'locks' ? 'vehicle_id' : (table === 'settings' ? 'key' : 'name');
                 await window.appDB._delete(table, oldRow[key]);
             }
-
-            // 重新渲染畫面
             if (window.init) window.init();
         } catch (err) {
-            console.error("[Sync] 本地更新失敗:", err);
+            console.error("[Sync] 本地 DB 更新失敗:", err);
         }
     }
 
@@ -125,15 +139,18 @@ class SyncManager {
         try {
             if (action === 'put') {
                 const payload = { ...data, room_id: this.currentRoom };
-                await this.supabase.from(table).upsert(payload);
+                const { error } = await this.supabase.from(table).upsert(payload);
+                if (error) throw error;
             } else if (action === 'delete') {
-                const key = table === 'locks' ? 'vehicle_id' : (table === 'settings' ? 'key' : 'name');
-                await this.supabase.from(table).delete().eq(key, data).eq('room_id', this.currentRoom);
+                const keyField = table === 'locks' ? 'vehicle_id' : (table === 'settings' ? 'key' : 'name');
+                const { error } = await this.supabase.from(table).delete().eq(keyField, data).eq('room_id', this.currentRoom);
+                if (error) throw error;
             } else if (action === 'clear') {
-                await this.supabase.from(table).delete().eq('room_id', this.currentRoom);
+                const { error } = await this.supabase.from(table).delete().eq('room_id', this.currentRoom);
+                if (error) throw error;
             }
         } catch (err) {
-            console.warn("[Sync] 資料上傳失敗 (可能尚未建立表格或權限問題):", err);
+            console.warn(`[Sync] 雲端同步失敗 (${table}):`, err);
         } finally {
             this.isSyncing = false;
         }
@@ -141,35 +158,22 @@ class SyncManager {
 
     async leaveRoom() {
         if (!this.currentRoom) return;
-
-        console.log(`[Sync] 退出房間: ${this.currentRoom}`);
-
-        // 1. 斷開所有即時連線頻道
-        if (this.supabase) {
-            this.supabase.removeAllChannels();
-        }
-
-        // 2. 清除狀態
+        if (this.supabase) this.supabase.removeAllChannels();
         this.currentRoom = null;
-
-        // 3. 更新 UI
         document.getElementById('roomStatus').style.display = 'none';
         document.getElementById('roomIdInput').value = '';
-
-        // 4. 清除 URL 參數
         const url = new URL(window.location);
         url.searchParams.delete('room');
         window.history.pushState({}, '', url);
-
         alert('已退出同步模式，切換回本地儲存。');
     }
 }
 
 window.syncManager = new SyncManager();
 
-// 全局綁定
 window.joinRoom = () => {
     const roomId = document.getElementById('roomIdInput').value.trim();
+    if (!roomId) return;
     if (confirm(`加入房間「${roomId}」將會覆蓋您目前的本地資料，是否繼續？`)) {
         window.syncManager.joinRoom(roomId);
     }
