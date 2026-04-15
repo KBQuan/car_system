@@ -60,10 +60,8 @@
         }
 
         #sidebar h3 {
-            margin-top: 40px;
+            margin-top: 5px;
             color: #2c3e50;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
         }
 
 
@@ -118,6 +116,42 @@
             margin-bottom: 10px;
         }
 
+        /* 側邊欄摺疊樣式 */
+        .sidebar-section-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 2px solid #eee;
+            margin-top: 20px !important;
+            user-select: none;
+        }
+
+        .sidebar-section-header:hover {
+            color: #2196f3;
+        }
+
+        .sidebar-section-header::after {
+            content: '▼';
+            font-size: 12px;
+            transition: transform 0.3s;
+            color: #999;
+        }
+
+        .sidebar-section-header.collapsed::after {
+            transform: rotate(-90deg);
+        }
+
+        .sidebar-section-content {
+            display: block;
+            margin-top: 10px;
+        }
+
+        .sidebar-section-content.hidden {
+            display: none;
+        }
+
         /* 控制面板 */
         .controls {
             background: white;
@@ -126,6 +160,27 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             display: inline-block;
             margin-bottom: 20px;
+            max-width: 95%;
+        }
+
+        .control-row {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .vehicle-count-row {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
 
         input[type="text"],
@@ -435,80 +490,90 @@
 
     <!-- 側邊欄 -->
     <div id="sidebar">
-        <h3>📖 使用說明</h3>
-        <div
-            style="background: #fff3e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-            <button onclick="openManual()"
-                style="background: #ffb74d; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 16px; font-weight: bold;">📖
-                閱讀使用說明書</button>
-        </div>
-
-        <h3>🌐 多人即時協作</h3>
-        <div
-            style="background: #f3e5f5; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-            <small style="color: #666;">輸入房間 ID 以加入共編，或分享目前的網址給他人。</small>
-            <input type="text" id="roomIdInput" placeholder="輸入房間名稱或 ID" style="width: 100%; box-sizing: border-box;">
-            <button onclick="joinRoom()"
-                style="background: #9c27b0; color: white; width: 100%; margin: 0; padding: 10px; border-radius: 6px;">🔗
-                加入/建立房間</button>
-            <div id="roomStatus"
-                style="font-size: 12px; color: #7b1fa2; font-weight: bold; text-align: center; display: none;">
-                同步中：<span id="activeRoomId"></span>
-                <button onclick="leaveRoom()"
-                    style="background: #ef5350; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; margin-left: 10px; font-size: 11px;">退出同步</button>
+        <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">📖 使用說明</h3>
+        <div class="sidebar-section-content hidden">
+            <div
+                style="background: #fff3e0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <button onclick="openManual()"
+                    style="background: #ffb74d; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 16px; font-weight: bold;">📖
+                    閱讀使用說明書</button>
             </div>
         </div>
 
-        <h3>💾 進度儲存管理</h3>
-        <div
-            style="background: #e3f2fd; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
-            <small style="color: #666;">可將目前的車位安排匯出成進度檔留存，或將先前的進度匯入接續作業。</small>
-            <button onclick="exportJSONBackup()"
-                style="background: #2196f3; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 16px; font-weight: bold;">💾
-                匯出進度檔 (JSON)</button>
-            <label
-                style="background: #ff9800; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; text-align: center; font-size: 16px; font-weight: bold;">
-                ⬇️ 匯入進度檔 (JSON)
-                <input type="file" accept=".json" onchange="importJSONBackup(event)" style="display: none;">
-            </label>
-        </div>
-
-        <h3>📊 檔案匯出與匯入</h3>
-        <div
-            style="background: #e8f5e9; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
-            <label class="import-btn"
-                style="cursor: pointer; display: block; border-radius: 6px; font-weight: bold; background: #4caf50; color: white; padding: 10px; line-height: normal; margin: 0; text-align: center; font-size: 16px;">
-                📥 匯入 Excel 名單
-                <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="importExcel(event)"
-                    style="display: none;">
-            </label>
-            <button class="export-excel-btn" onclick="exportExcel()"
-                style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📊
-                匯出 Excel </button>
-            <button class="export-btn" onclick="exportPNG()"
-                style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📄
-                匯出 PNG 車位圖</button>
-
-        </div>
-
-        <h3>📝筆記板</h3>
-        <div class="update-notes-container">
-            <div id="notes-list" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
-                <!-- 動態產生的公告會放在這 -->
-            </div>
-
-            <div id="notes-edit-mode">
-                <small style="color: #666; display: block; margin-bottom: 5px;">新增貼文：</small>
-                <textarea id="update-notes-area" placeholder="請輸入近期更新項目或備忘筆記..."></textarea>
-                <div style="display: flex; gap: 5px; margin-top: 5px;">
-                    <button onclick="publishUpdateNotes()"
-                        style="background: #4caf50; color: white; width: 100%; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">🚀
-                        發布貼文</button>
-                    <button id="cancel-edit-btn" onclick="cancelEditNote()"
-                        style="display: none; background: #9e9e9e; color: white; width: 100%; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">❌
-                        取消編輯</button>
+        <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">🌐 多人即時協作</h3>
+        <div class="sidebar-section-content hidden">
+            <div
+                style="background: #f3e5f5; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <small style="color: #666;">輸入房間 ID 以加入共編，或分享目前的網址給他人。</small>
+                <input type="text" id="roomIdInput" placeholder="輸入房間名稱或 ID" style="width: 100%; box-sizing: border-box;">
+                <button onclick="joinRoom()"
+                    style="background: #9c27b0; color: white; width: 100%; margin: 0; padding: 10px; border-radius: 6px;">🔗
+                    加入/建立房間</button>
+                <div id="roomStatus"
+                    style="font-size: 12px; color: #7b1fa2; font-weight: bold; text-align: center; display: none;">
+                    同步中：<span id="activeRoomId"></span>
+                    <button onclick="leaveRoom()"
+                        style="background: #ef5350; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; margin-left: 10px; font-size: 11px;">退出同步</button>
                 </div>
-                <input type="hidden" id="editing-note-id" value="">
+            </div>
+        </div>
+
+        <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">💾 進度儲存管理</h3>
+        <div class="sidebar-section-content hidden">
+            <div
+                style="background: #e3f2fd; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+                <small style="color: #666;">可將目前的車位安排匯出成進度檔留存，或將先前的進度匯入接續作業。</small>
+                <button onclick="exportJSONBackup()"
+                    style="background: #2196f3; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 16px; font-weight: bold;">💾
+                    匯出進度檔 (JSON)</button>
+                <label
+                    style="background: #ff9800; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; text-align: center; font-size: 16px; font-weight: bold;">
+                    ⬇️ 匯入進度檔 (JSON)
+                    <input type="file" accept=".json" onchange="importJSONBackup(event)" style="display: none;">
+                </label>
+            </div>
+        </div>
+
+        <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">📊 檔案匯出與匯入</h3>
+        <div class="sidebar-section-content hidden">
+            <div
+                style="background: #e8f5e9; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+                <label class="import-btn"
+                    style="cursor: pointer; display: block; border-radius: 6px; font-weight: bold; background: #4caf50; color: white; padding: 10px; line-height: normal; margin: 0; text-align: center; font-size: 16px;">
+                    📥 匯入 Excel 名單
+                    <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="importExcel(event)"
+                        style="display: none;">
+                </label>
+                <button class="export-excel-btn" onclick="exportExcel()"
+                    style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📊
+                    匯出 Excel </button>
+                <button class="export-btn" onclick="exportPNG()"
+                    style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📄
+                    匯出 PNG 車位圖</button>
+
+            </div>
+        </div>
+
+        <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">📝筆記板</h3>
+        <div class="sidebar-section-content hidden">
+            <div class="update-notes-container">
+                <div id="notes-list" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+                    <!-- 動態產生的公告會放在這 -->
+                </div>
+
+                <div id="notes-edit-mode">
+                    <small style="color: #666; display: block; margin-bottom: 5px;">新增貼文：</small>
+                    <textarea id="update-notes-area" placeholder="請輸入近期更新項目或備忘筆記..."></textarea>
+                    <div style="display: flex; gap: 5px; margin-top: 5px;">
+                        <button onclick="publishUpdateNotes()"
+                            style="background: #4caf50; color: white; width: 100%; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">🚀
+                            發布貼文</button>
+                        <button id="cancel-edit-btn" onclick="cancelEditNote()"
+                            style="display: none; background: #9e9e9e; color: white; width: 100%; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">❌
+                            取消編輯</button>
+                    </div>
+                    <input type="hidden" id="editing-note-id" value="">
+                </div>
             </div>
         </div>
     </div>
@@ -517,16 +582,25 @@
     <div id="content-wrapper">
         <div class="controls">
             <h2>🚗 車輛自動安排系統</h2>
-            <input type="text" id="nameInput" placeholder="請輸入姓名">
-            <button onclick="addPerson('male')" style="background: #bbdefb; color: #1976d2;">加入乾道</button>
-            <button onclick="addPerson('female')" style="background: #f8bbd0; color: #c2185b;">加入坤道</button>
-            <label style="margin-left: 15px;">車輛數:</label>
-            <select id="vehicleCount" onchange="saveVehicleCount()">
-                <option value="4">4 台</option>
-                <option value="6">6 台</option>
-                <option value="8">8 台</option>
-                <option value="10">10 台</option>
-            </select>
+            <div class="control-row">
+                <input type="text" id="nameInput" placeholder="請輸入姓名">
+                <button onclick="addPerson('male')" style="background: #bbdefb; color: #1976d2;">加入乾道</button>
+                <button onclick="addPerson('female')" style="background: #f8bbd0; color: #c2185b;">加入坤道</button>
+            </div>
+
+            <div class="vehicle-count-row">
+                <label>設定車輛數:</label>
+                <select id="vehicleCount" onchange="saveVehicleCount()">
+                    <option value="4">4 台</option>
+                    <option value="6">6 台</option>
+                    <option value="8">8 台</option>
+                    <option value="10">10 台</option>
+                    <option value="12">12 台</option>
+                    <option value="15">15 台</option>
+                    <option value="20">20 台</option>
+                </select>
+            </div>
+
             <div class="action-buttons">
                 <button class="delete-btn" onclick="deleteSelected()">🗑️ 刪除選取人員</button>
                 <button class="delete-btn" onclick="clearAllPersons()" style="background: #ef5350;">🗑️ 清除所有人員</button>
@@ -603,6 +677,12 @@
                 modal.style.display = "none";
             }
         });
+
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const isHidden = content.classList.toggle('hidden');
+            header.classList.toggle('collapsed', isHidden);
+        }
     </script>
 
     <div class="version-info">
