@@ -36,6 +36,7 @@ async function init() {
             updateNotesList = JSON.parse(updateNotesData.value);
         }
         renderUpdateNotes();
+        await loadUserSettings();
 
         // 載入鎖定狀態
         const locks = await window.appDB.getLocks();
@@ -84,7 +85,7 @@ async function init() {
 // 建立人員 DOM 元件
 function createPersonElement(name, gender) {
     const el = document.createElement('div');
-    el.className = `draggable ${gender}`;
+    el.className = `draggable ${gender} glow-border`;
     el.textContent = name;
     el.draggable = true;
     el.id = "person-" + name;
@@ -146,7 +147,7 @@ function renderVehicleFramework(lockMap = {}, ownerMap = {}) {
 
     for (const i of vehicleIds) {
         const v = document.createElement('div');
-        v.className = 'vehicle';
+        v.className = 'vehicle glow-border';
         v.id = `vehicle-${i}`;
 
         if (lockMap[i]) {
@@ -627,3 +628,147 @@ window.resetVehicle = resetVehicle;
 
 // 頁面開啟時啟動
 window.onload = init;
+
+// 邊框發光追蹤
+window.addEventListener('mousemove', (e) => {
+    // 如果全域停用發光，則不執行邏輯
+    if (document.body.classList.contains('glow-disabled')) return;
+
+    const glowElements = document.querySelectorAll('.glow-border');
+    glowElements.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        // 只有當滑鼠在元素附近一定範圍內才更新，提升效能
+        const buffer = 150; 
+        if (e.clientX >= rect.left - buffer && e.clientX <= rect.right + buffer &&
+            e.clientY >= rect.top - buffer && e.clientY <= rect.bottom + buffer) {
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            el.style.setProperty('--mouse-x', `${x}px`);
+            el.style.setProperty('--mouse-y', `${y}px`);
+        }
+    });
+});
+
+// 使用者個人設定相關
+async function loadUserSettings() {
+    const settingsData = await window.appDB.getSetting('userGlowSettings');
+    const settings = settingsData && settingsData.value ? JSON.parse(settingsData.value) : {
+        color: '#808080',
+        size: 150,
+        opacity: 0.7,
+        enabled: true
+    };
+
+    applyUserSettings(settings);
+}
+
+function applyUserSettings(settings) {
+    const r = parseInt(settings.color.slice(1, 3), 16);
+    const g = parseInt(settings.color.slice(3, 5), 16);
+    const b = parseInt(settings.color.slice(5, 7), 16);
+    
+    const opacity = settings.opacity !== undefined ? settings.opacity : 0.7;
+    const enabled = settings.enabled !== undefined ? settings.enabled : true;
+
+    document.documentElement.style.setProperty('--glow-color', `rgba(${r}, ${g}, ${b}, ${opacity})`);
+    document.documentElement.style.setProperty('--glow-size', `${settings.size}px`);
+
+    // 處理全域啟用/停用
+    if (enabled) {
+        document.body.classList.remove('glow-disabled');
+        const detailPanel = document.getElementById('glowSettingsDetail');
+        if (detailPanel) detailPanel.style.opacity = "1";
+        if (detailPanel) detailPanel.style.pointerEvents = "auto";
+    } else {
+        document.body.classList.add('glow-disabled');
+        const detailPanel = document.getElementById('glowSettingsDetail');
+        if (detailPanel) detailPanel.style.opacity = "0.5";
+        if (detailPanel) detailPanel.style.pointerEvents = "none";
+    }
+
+    // 更新 UI 顯示
+    const toggle = document.getElementById('glowEnabledToggle');
+    if (toggle) toggle.checked = enabled;
+
+    const picker = document.getElementById('glowColorPicker');
+    if (picker) picker.value = settings.color;
+    
+    const colorDisplay = document.getElementById('colorValueDisplay');
+    if (colorDisplay) colorDisplay.textContent = settings.color.toUpperCase();
+
+    const opSlider = document.getElementById('glowOpacitySlider');
+    if (opSlider) opSlider.value = opacity;
+
+    const opDisplay = document.getElementById('opacityValueDisplay');
+    if (opDisplay) opDisplay.textContent = `${Math.round(opacity * 100)}%`;
+
+    const slider = document.getElementById('glowSizeSlider');
+    if (slider) slider.value = settings.size;
+
+    const sizeDisplay = document.getElementById('sizeValueDisplay');
+    if (sizeDisplay) sizeDisplay.textContent = `${settings.size}px`;
+
+    // 更新預設按鈕啟動狀態
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        const btnHex = btn.style.backgroundColor;
+        // 簡單判斷背景色是否匹配 (Hex 轉 RGB 比較複雜，這裡先簡單處理)
+        btn.classList.toggle('active', btn.title === settings.color);
+    });
+}
+
+async function changeGlowColor(hex) {
+    const settingsData = await window.appDB.getSetting('userGlowSettings');
+    const settings = settingsData && settingsData.value ? JSON.parse(settingsData.value) : { color: '#808080', size: 150, opacity: 0.7, enabled: true };
+    
+    settings.color = hex;
+    await window.appDB.saveSetting('userGlowSettings', JSON.stringify(settings));
+    applyUserSettings(settings);
+}
+
+async function updateGlowSize(size) {
+    const settingsData = await window.appDB.getSetting('userGlowSettings');
+    const settings = settingsData && settingsData.value ? JSON.parse(settingsData.value) : { color: '#808080', size: 150, opacity: 0.7, enabled: true };
+    
+    settings.size = parseInt(size);
+    await window.appDB.saveSetting('userGlowSettings', JSON.stringify(settings));
+    applyUserSettings(settings);
+}
+
+async function updateGlowOpacity(opacity) {
+    const settingsData = await window.appDB.getSetting('userGlowSettings');
+    const settings = settingsData && settingsData.value ? JSON.parse(settingsData.value) : { color: '#808080', size: 150, opacity: 0.7, enabled: true };
+    
+    settings.opacity = parseFloat(opacity);
+    await window.appDB.saveSetting('userGlowSettings', JSON.stringify(settings));
+    applyUserSettings(settings);
+}
+
+async function toggleGlow(enabled) {
+    const settingsData = await window.appDB.getSetting('userGlowSettings');
+    const settings = settingsData && settingsData.value ? JSON.parse(settingsData.value) : { color: '#808080', size: 150, opacity: 0.7, enabled: true };
+    
+    settings.enabled = enabled;
+    await window.appDB.saveSetting('userGlowSettings', JSON.stringify(settings));
+    applyUserSettings(settings);
+}
+
+function previewGlow(e, el) {
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    el.style.setProperty('--mouse-x', `${x}px`);
+    el.style.setProperty('--mouse-y', `${y}px`);
+}
+
+async function resetSettings() {
+    const defaultSettings = { color: '#808080', size: 150, opacity: 0.7, enabled: true };
+    await window.appDB.saveSetting('userGlowSettings', JSON.stringify(defaultSettings));
+    applyUserSettings(defaultSettings);
+}
+
+window.changeGlowColor = changeGlowColor;
+window.updateGlowSize = updateGlowSize;
+window.updateGlowOpacity = updateGlowOpacity;
+window.toggleGlow = toggleGlow;
+window.previewGlow = previewGlow;
+window.resetSettings = resetSettings;
