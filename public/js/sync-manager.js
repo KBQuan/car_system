@@ -118,7 +118,13 @@ class SyncManager {
         
         try {
             if (eventType === 'INSERT' || eventType === 'UPDATE') {
-                if (table === 'passengers') await window.appDB._put('passengers', { name: newRow.name, gender: newRow.gender });
+                if (table === 'passengers') {
+                    let gender = newRow.gender;
+                    if (!gender) gender = 'male';
+                    if (gender === '乾道') gender = 'male';
+                    if (gender === '坤道') gender = 'female';
+                    await window.appDB._put('passengers', { name: newRow.name, gender: gender });
+                }
                 if (table === 'assignments') await window.appDB._put('assignments', { name: newRow.name, vehicle_id: newRow.vehicle_id, seat_index: newRow.seat_index });
                 if (table === 'settings') await window.appDB._put('settings', { key: newRow.key, value: newRow.value });
                 if (table === 'locks') await window.appDB._put('locks', { vehicle_id: newRow.vehicle_id, is_locked: newRow.is_locked });
@@ -133,7 +139,7 @@ class SyncManager {
     }
 
     async pushChange(table, action, data) {
-        if (!this.currentRoom || !this.supabase || this.isSyncing) return;
+        if (!this.currentRoom || !this.supabase || this.isSyncing || this.isBulkOperating) return;
 
         this.isSyncing = true;
         try {
@@ -157,6 +163,39 @@ class SyncManager {
             setTimeout(() => { this.isSyncing = false; }, 100);
         }
     }
+
+    async pushFullState() {
+        if (!this.currentRoom || !this.supabase) return;
+        this.isBulkOperating = true;
+        try {
+            console.log('[Sync] 開始推送完整本地資料至雲端房間...');
+            // 1. 清空雲端的目前房間資料
+            await Promise.all([
+                this.supabase.from('passengers').delete().eq('room_id', this.currentRoom),
+                this.supabase.from('assignments').delete().eq('room_id', this.currentRoom),
+                this.supabase.from('settings').delete().eq('room_id', this.currentRoom),
+                this.supabase.from('locks').delete().eq('room_id', this.currentRoom)
+            ]);
+
+            // 2. 獲取本地全部資料
+            const localData = await window.appDB.exportData();
+            const payloadTransform = (list) => (list || []).map(item => ({ ...item, room_id: this.currentRoom }));
+
+            // 3. 推進雲端
+            await Promise.all([
+                localData.passengers && localData.passengers.length > 0 ? this.supabase.from('passengers').insert(payloadTransform(localData.passengers)) : Promise.resolve(),
+                localData.assignments && localData.assignments.length > 0 ? this.supabase.from('assignments').insert(payloadTransform(localData.assignments)) : Promise.resolve(),
+                localData.settings && localData.settings.length > 0 ? this.supabase.from('settings').insert(payloadTransform(localData.settings)) : Promise.resolve(),
+                localData.locks && localData.locks.length > 0 ? this.supabase.from('locks').insert(payloadTransform(localData.locks)) : Promise.resolve()
+            ]);
+            console.log('[Sync] ☁️ 完整狀態推送完畢！');
+        } catch (err) {
+            console.error('[Sync] ❌ 完整推送失敗:', err);
+        } finally {
+            this.isBulkOperating = false;
+        }
+    }
+
 
     async leaveRoom() {
         if (!this.currentRoom) return;

@@ -61,7 +61,11 @@ async function init() {
 
         // 3. 分配人員到對應位置
         data.forEach(p => {
-            const el = createPersonElement(p.name, p.gender);
+            let gender = p.gender;
+            if (!gender || (gender !== 'male' && gender !== 'female')) {
+                gender = 'male'; // 預設防呆
+            }
+            const el = createPersonElement(p.name, gender);
 
             if (p.vehicle_id) {
                 const vehicle = document.getElementById(`vehicle-${p.vehicle_id}`);
@@ -268,9 +272,18 @@ async function deleteSelected() {
 
     const names = Array.from(selectedPeople).join('、');
     if (confirm(`確定要將以下人員從資料庫永久刪除嗎?\n\n${names}`)) {
+        if (window.syncManager) window.syncManager.isBulkOperating = true;
+        
         for (const name of selectedPeople) {
             await window.appDB.deletePassenger(name);
         }
+        
+        if (window.syncManager && window.syncManager.currentRoom) {
+            await window.syncManager.pushFullState();
+        } else if (window.syncManager) {
+            window.syncManager.isBulkOperating = false;
+        }
+
         selectedPeople.clear();
         init();
     }
@@ -295,6 +308,8 @@ async function clearAllPersons() {
     }
 
     if (confirm(`確定要將這 ${peopleToDelete.length} 位人員(包含名單列及未鎖定車位的人員)從系統永久刪除嗎？`)) {
+        if (window.syncManager) window.syncManager.isBulkOperating = true;
+
         for (const p of peopleToDelete) {
             await window.appDB.deletePassenger(p.name);
             selectedPeople.delete(p.name);
@@ -317,6 +332,12 @@ async function clearAllPersons() {
             }
         }
 
+        if (window.syncManager && window.syncManager.currentRoom) {
+            await window.syncManager.pushFullState();
+        } else if (window.syncManager) {
+            window.syncManager.isBulkOperating = false;
+        }
+
         init();
     }
 }
@@ -332,10 +353,19 @@ async function resetVehicle(vehicleId) {
     }
 
     if (confirm(`確定要重新分配第 ${vehicleId} 車的 ${passengersInCar.length} 位人員嗎？ (將回到待分配名單)`)) {
+        if (window.syncManager) window.syncManager.isBulkOperating = true;
+
         for (const p of passengersInCar) {
             await window.appDB.removeAssignment(p.name);
             selectedPeople.delete(p.name);
         }
+
+        if (window.syncManager && window.syncManager.currentRoom) {
+            await window.syncManager.pushFullState();
+        } else if (window.syncManager) {
+            window.syncManager.isBulkOperating = false;
+        }
+
         init();
     }
 }
@@ -381,6 +411,9 @@ async function importExcel(event) {
             const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
             let importCount = 0;
+            
+            // 開啟大量匯入防護鎖
+            if (window.syncManager) window.syncManager.isBulkOperating = true;
 
             for (let i = 0; i < jsonData.length; i++) {
                 const row = jsonData[i];
@@ -395,6 +428,13 @@ async function importExcel(event) {
                     const name = row[1].toString().trim();
                     try { await window.appDB.addPassenger(name, 'female'); importCount++; } catch (e) { }
                 }
+            }
+
+            // 完成匯入後，推送完整狀態覆蓋雲端房間，並解開防護鎖
+            if (window.syncManager && window.syncManager.currentRoom) {
+                await window.syncManager.pushFullState();
+            } else if (window.syncManager) {
+                window.syncManager.isBulkOperating = false;
             }
 
             alert(`✅ 成功匯入人員！`);
@@ -602,7 +642,17 @@ async function importJSONBackup(event) {
     reader.onload = async function (e) {
         try {
             const data = JSON.parse(e.target.result);
+            
+            if (window.syncManager) window.syncManager.isBulkOperating = true;
+            
             await window.appDB.importData(data);
+            
+            if (window.syncManager && window.syncManager.currentRoom) {
+                await window.syncManager.pushFullState();
+            } else if (window.syncManager) {
+                window.syncManager.isBulkOperating = false;
+            }
+            
             alert('✅ 成功匯入進度！');
             // 直接重新渲染
             location.reload();

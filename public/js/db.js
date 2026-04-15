@@ -208,6 +208,12 @@ class AppDB {
                 store.clear(); // 清空舊資料
                 if (data[storeName] && Array.isArray(data[storeName])) {
                     data[storeName].forEach(item => {
+                        // 針對 personnel 資料進行清洗與防呆
+                        if (storeName === 'passengers') {
+                            if (!item.gender) item.gender = 'male';
+                            if (item.gender === '乾道') item.gender = 'male';
+                            if (item.gender === '坤道') item.gender = 'female';
+                        }
                         store.put(item);
                     });
                 }
