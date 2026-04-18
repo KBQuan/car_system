@@ -76,8 +76,8 @@ async function init() {
             }
         });
     } catch (err) {
-        console.error(err);
-        alert("資料庫載入失敗");
+        console.error("初始化失敗:", err);
+        alert("資料庫載入失敗！\n錯誤資訊: " + (err.message || err));
     }
 }
 
