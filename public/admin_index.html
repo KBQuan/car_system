@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理者控制中心 - 法樞中心</title>
+    <link rel="icon" type="image/png" href="admin_favicon.png">
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/db.js"></script>
+    <script src="js/supabase.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #f39c12;
+            --bg: #f5f6fa;
+            --card-bg: #fff;
+            --text: #2f3640;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --border: #dcdde1;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Style */
+        .sidebar {
+            width: 250px;
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sidebar h2 {
+            font-size: 20px;
+            margin: 0 0 20px 0;
+            text-align: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 12px 15px;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.3s;
+            font-size: 16px;
+        }
+
+        .nav-btn:hover,
+        .nav-btn.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .logout-btn {
+            margin-top: auto;
+            background: rgba(231, 76, 60, 0.2);
+            color: #ff7675;
+            text-align: center;
+        }
+
+        .logout-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Main Content Style */
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+            box-sizing: border-box;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            display: none;
+            /* Default hidden */
+        }
+
+        .card.active {
+            display: block;
+        }
+
+        .card-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--primary);
+            border-left: 5px solid var(--accent);
+            padding-left: 15px;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.1);
+        }
+
+        .btn-action {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-save {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-refresh {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-save:hover,
+        .btn-refresh:hover,
+        .btn-danger:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Table Style */
+        .table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        tr:hover {
+            background: #fdfdfd;
+        }
+
+        /* Status & Badges */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .badge-male {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-female {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+        .search-area {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background: #fff;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+        }
+
+        .tag .remove-btn {
+            cursor: pointer;
+            color: var(--danger);
+            font-weight: bold;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2>🛡️ 法樞中心</h2>
+        <button class="nav-btn active" onclick="showTab('system')">⚙️ 系統設定</button>
+        <button class="nav-btn" onclick="showTab('rooms')">🌐 房間管理</button>
+        <button class="nav-btn" onclick="showTab('personnel')">👥 名單管理</button>
+        <button class="nav-btn" onclick="showTab('history')">📜 登入紀錄</button>
+
+        <button class="nav-btn logout-btn" onclick="window.location.href='index.html'"> 登出 </button>
+    </div>
+
+    <div class="main-content">
+        <header>
+            <h1 id="tabTitle">系統設定</h1>
+            <div>
+                <span id="adminUserDisplay" style="margin-right: 15px; font-weight: bold; color: var(--primary); font-size: 14px; background: rgba(0,0,0,0.05); padding: 5px 12px; border-radius: 20px;">👤 讀取中...</span>
+                <span id="syncStatus">🔄 雲端同步中...</span>
+            </div>
+        </header>
+
+        <!-- 系統設定 -->
+        <div id="tab-system" class="card active">
+            <div class="card-header">版本號管理</div>
+            <div class="form-group">
+                <label>當前顯示版本 (同步至全域)：</label>
+                <input type="text" id="versionInput" placeholder="例如: 26.04.5 Beta">
+            </div>
+            <div style="text-align: right;">
+                <button class="btn-action btn-save" onclick="updateVersion()">💾 儲存並同步版本號</button>
+            </div>
+
+            <div class="card-header" style="margin-top: 30px;">使用說明書編輯</div>
+            <div class="form-group">
+                <label>內容 (支援 HTML，同步至全域)：</label>
+                <textarea id="manualInput" style="height: 300px;"></textarea>
+            </div>
+            <div style="text-align: right;">
+                <button class="btn-action btn-save" onclick="updateManual()">💾 儲存並同步說明書</button>
+            </div>
+        </div>
+
+        <!-- 房間管理 -->
+        <div id="tab-rooms" class="card">
+            <div class="card-header">
+                雲端實體房間維護
+                <button class="btn-action btn-refresh" onclick="fetchCloudRooms()"
+                    style="padding: 5px 10px; font-size: 12px;">🔄 重新整理</button>
+            </div>
+            <div class="table-container">
+                <table id="roomTable">
+                    <thead>
+                        <tr>
+                            <th>房間 ID / 名稱</th>
+                            <th>同步狀態</th>
+                            <th>建立時間</th>
+                            <th style="width: 80px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cloudRoomTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 名單管理 -->
+        <div id="tab-personnel" class="card">
+            <div class="card-header">跨房間名單維護</div>
+            <div class="search-area">
+                <div class="form-group">
+                    <label>選擇查詢房間：</label>
+                    <select id="personnelRoomSelector" onchange="fetchPersonnel()">
+                        <option value="">-- 請選擇一個房間 --</option>
+                    </select>
+                </div>
+                <div style="text-align: right;">
+                    <button class="btn-action btn-refresh" onclick="fetchPersonnel()">🔍 重新查詢</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="personnelTable">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>性別</th>
+                            <th>所屬房間</th>
+                            <th style="width: 150px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="personnelTableBody">
+                        <tr>
+                            <td colspan="3" style="text-align: center; color: #999; padding: 40px;">請先選擇房間以顯示名單</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="personnelLoading" class="loading-spinner" style="display: none;">正在讀取名單...</div>
+            </div>
+        </div>
+
+        <!-- 登入紀錄 -->
+        <div id="tab-history" class="card">
+            <div class="card-header">
+                系統登入歷史紀錄
+                <button class="btn-action btn-refresh" onclick="fetchLoginHistory()" style="padding: 5px 10px; font-size: 12px;">🔄 重新整理</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">序號</th>
+                            <th>登入帳號</th>
+                            <th>時間</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr><td colspan="3" style="text-align: center; color: #999; padding: 40px;">正在讀取紀錄...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 編輯名單 Modal (簡單實現) -->
+    <div id="editModal"
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="display: block; width: 400px; margin: 0;">
+            <div class="card-header">🔧 編輯人員資料</div>
+            <div class="form-group">
+                <label>姓名：</label>
+                <input type="text" id="editPersonName">
+            </div>
+            <div class="form-group">
+                <label>性別：</label>
+                <select id="editPersonGender">
+                    <option value="male">乾道 (Male)</option>
+                    <option value="female">坤道 (Female)</option>
+                </select>
+            </div>
+            <input type="hidden" id="editOldName">
+            <input type="hidden" id="editRoomId">
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-action" onclick="closeEditModal()">取消</button>
+                <button class="btn-action btn-save" onclick="commitEdit()">💾 確認變更</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GLOBAL_ROOM = 'SYSTEM_GLOBAL';
+        let roomPresets = [];
+        let cloudRooms = [];
+
+        async function initAdmin() {
+            await window.appDB.init();
+            
+            // 顯示當前登入者
+            const adminEmail = localStorage.getItem('adminEmail') || '未知管理員';
+            document.getElementById('adminUserDisplay').textContent = `👤 ${adminEmail}`;
+
+            await loadSettings();
+            await fetchCloudRooms();
+            document.getElementById('syncStatus').textContent = '✅ 已連結雲端';
+        }
+
+        async function loadSettings() {
+            const supabase = window.getSupabase();
+            let remoteSettings = {};
+            if (supabase) {
+                try {
+                    const { data } = await supabase.from('settings').select('*').eq('room_id', GLOBAL_ROOM);
+                    if (data) data.forEach(s => remoteSettings[s.key] = s.value);
+                } catch (e) { console.error(e); }
+            }
+            document.getElementById('versionInput').value = remoteSettings['system_version'] || '26.04.1 Beta';
+            document.getElementById('manualInput').value = remoteSettings['user_manual'] || '';
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            const btn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.onclick.toString().includes(tab));
+            if (btn) btn.classList.add('active');
+            const titles = { 'system': '系統設定', 'rooms': '房間管理總覽', 'personnel': '人員名單管理', 'history': '登入紀錄查詢' };
+            document.getElementById('tabTitle').textContent = titles[tab];
+
+            if (tab === 'history') {
+                fetchLoginHistory();
+            }
+        }
+
+        // --- 名單管理邏輯 ---
+
+        async function fetchPersonnel() {
+            const roomId = document.getElementById('personnelRoomSelector').value;
+            const tbody = document.getElementById('personnelTableBody');
+            const loader = document.getElementById('personnelLoading');
+
+            tbody.innerHTML = '';
+            loader.style.display = 'block';
+
+            const supabase = window.getSupabase();
+            try {
+                let query = supabase.from('passengers').select('*');
+
+                // 若有選取特定房間，加入篩選條件
+                if (roomId) {
+                    query = query.eq('room_id', roomId);
+                }
+
+                const { data, error } = await query.order('room_id').order('name');
+                if (error) throw error;
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #999; padding: 40px;">目前尚無人員名單資料</td></tr>`;
+                } else {
+                    data.forEach(p => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${p.name}</td>
+                            <td><span class="badge badge-${p.gender}">${p.gender === 'male' ? '乾道' : '坤道'}</span></td>
+                            <td><span style="font-family: monospace; font-size: 12px; color: #666;">${p.room_id}</span></td>
+                            <td style="display: flex; gap: 10px;">
+                                <button class="btn-action btn-save" onclick="openEditModal('${p.room_id}', '${p.name}', '${p.gender}')" style="padding: 4px 8px; font-size: 12px;">編輯</button>
+                                <button class="btn-action btn-danger" onclick="deletePersonnel('${p.room_id}', '${p.name}')" style="padding: 4px 8px; font-size: 12px;">刪除</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (e) {
+                alert("抓取人員清單失敗：" + e.message);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        async function deletePersonnel(roomId, name) {
+            if (!confirm(`確定要刪除「${name}」嗎？\n此操作無法撤回！`)) return;
+            const supabase = window.getSupabase();
+            try {
+                // 1. 刪除名單
+                const { error: pErr } = await supabase.from('passengers').delete().eq('room_id', roomId).eq('name', name);
+                if (pErr) throw pErr;
+                // 2. 刪除關聯座位
+                await supabase.from('assignments').delete().eq('room_id', roomId).eq('name', name);
+                fetchPersonnel();
+            } catch (e) {
+                alert("刪除失敗：" + e.message);
+            }
+        }
+
+        function openEditModal(roomId, name, gender) {
+            document.getElementById('editRoomId').value = roomId;
+            document.getElementById('editOldName').value = name;
+            document.getElementById('editPersonName').value = name;
+            document.getElementById('editPersonGender').value = gender;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        async function commitEdit() {
+            const roomId = document.getElementById('editRoomId').value;
+            const oldName = document.getElementById('editOldName').value;
+            const newName = document.getElementById('editPersonName').value.trim();
+            const gender = document.getElementById('editPersonGender').value;
+
+            if (!newName) return alert("姓名不能為空");
+
+            const supabase = window.getSupabase();
+            try {
+                if (oldName !== newName) {
+                    // 若改名，涉及 PK 變動，採用先刪後加或 UPSERT (但 PK 包含 name，故須先刪)
+                    const { error: delErr } = await supabase.from('passengers').delete().eq('room_id', roomId).eq('name', oldName);
+                    if (delErr) throw delErr;
+                    // 同步更新 Assignments
+                    const { data: seat } = await supabase.from('assignments').select('*').eq('room_id', roomId).eq('name', oldName).single();
+                    if (seat) {
+                        await supabase.from('assignments').delete().eq('room_id', roomId).eq('name', oldName);
+                        await supabase.from('assignments').insert({ room_id: roomId, name: newName, vehicle_id: seat.vehicle_id, seat_index: seat.seat_index });
+                    }
+                }
+
+                const { error: insErr } = await supabase.from('passengers').upsert({ room_id: roomId, name: newName, gender: gender });
+                if (insErr) throw insErr;
+
+                alert("資料已更新！");
+                closeEditModal();
+                fetchPersonnel();
+            } catch (e) {
+                alert("更新失敗：" + e.message);
+            }
+        }
+
+        // --- 登入紀錄邏輯 ---
+
+        async function fetchLoginHistory() {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999; padding: 40px;">正在讀取紀錄...</td></tr>';
+
+            const supabase = window.getSupabase();
+            if (!supabase) return;
+
+            try {
+                const { data, error } = await supabase
+                    .from('login_history')
+                    .select('*')
+                    .order('login_time', { ascending: false })
+                    .limit(50);
+
+                if (error) throw error;
+
+                tbody.innerHTML = '';
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999; padding: 40px;">目前尚無登入紀錄</td></tr>';
+                } else {
+                    data.forEach((log, index) => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${log.email}</td>
+                            <td>${new Date(log.login_time).toLocaleString()}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red; padding: 40px;">讀取失敗: ${e.message}</td></tr>`;
+            }
+        }
+
+        // --- 房間與系統邏輯 (保持原有) ---
+
+        async function fetchCloudRooms() {
+            const supabase = window.getSupabase();
+            if (!supabase) return;
+            const { data } = await supabase.from('rooms').select('*').order('created_at', { ascending: false });
+            cloudRooms = data || [];
+            renderCloudRooms();
+            // 更新人員管理的選取選單
+            const selector = document.getElementById('personnelRoomSelector');
+            const currentVal = selector.value;
+            selector.innerHTML = '<option value="">-- 請選擇一個房間 --</option>';
+            cloudRooms.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.id;
+                opt.textContent = r.id;
+                selector.appendChild(opt);
+            });
+            selector.value = currentVal;
+        }
+
+        function renderCloudRooms() {
+            const tbody = document.getElementById('cloudRoomTableBody');
+            tbody.innerHTML = '';
+            cloudRooms.forEach(room => {
+                const tr = document.createElement('tr');
+                const isGlobal = room.id === 'SYSTEM_GLOBAL';
+                tr.innerHTML = `
+                    <td><b>${room.id}</b></td>
+                    <td><span class="badge ${isGlobal ? 'badge-male' : 'badge-female'}">${isGlobal ? '系統' : '活動'}</span></td>
+                    <td>${new Date(room.created_at).toLocaleString()}</td>
+                    <td>${isGlobal ? '' : `<button class="btn-action btn-danger" onclick="deleteCloudRoom('${room.id}')" style="padding: 4px 8px;">🗑️</button>`}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function deleteCloudRoom(id) {
+            if (!confirm(`確定要刪除房間「${id}」將會永久移除該房間的所有人員名單、座位安排與自訂設定。\n\n確定要繼續嗎？`)) return;
+            
+            const supabase = window.getSupabase();
+            try {
+                // 1. 先清除該房間的所有關聯資料 (防止外鍵約束報錯)
+                await supabase.from('passengers').delete().eq('room_id', id);
+                await supabase.from('assignments').delete().eq('room_id', id);
+                await supabase.from('settings').delete().eq('room_id', id);
+
+                // 2. 刪除房間主體
+                const { error } = await supabase.from('rooms').delete().eq('id', id);
+                
+                if (error) throw error;
+
+                alert(`房間 ${id} 已成功刪除`);
+                fetchCloudRooms();
+            } catch (e) {
+                console.error("刪除房間失敗:", e);
+                alert("刪除失敗，原因可能為資料庫約束或網路問題：" + e.message);
+            }
+        }
+
+        async function updateVersion() {
+            await pushGlobalSetting('system_version', document.getElementById('versionInput').value.trim());
+            alert('同步成功');
+        }
+
+        async function updateManual() {
+            await pushGlobalSetting('user_manual', document.getElementById('manualInput').value);
+            alert('同步成功');
+        }
+
+        async function pushGlobalSetting(key, value) {
+            const supabase = window.getSupabase();
+            if (!supabase) return;
+            try {
+                const { error } = await supabase
+                    .from('settings')
+                    .upsert({ room_id: GLOBAL_ROOM, key: key, value: value }, { onConflict: 'room_id,key' });
+                if (error) throw error;
+            } catch (e) {
+                console.error("同步失敗:", e);
+                alert("同步至雲端失敗");
+            }
+        }
+
+        window.onload = initAdmin;
+    </script>
+</body>
+
+</html>

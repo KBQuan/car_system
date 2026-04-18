@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理者登入 - 法樞控制台</title>
+    <link rel="icon" type="image/png" href="admin_favicon.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <style>
+        :root {
+            --admin-primary: #2c3e50;
+            /* 管理者專用深藍 */
+            --admin-accent: #f39c12;
+            /* 權限金色 */
+            --bg-color: #ecf0f1;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: radial-gradient(circle at center, #dcdde1 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .login-container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 420px;
+            box-sizing: border-box;
+            border-top: 5px solid var(--admin-primary);
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--admin-primary);
+            margin: 0 0 10px 0;
+            font-size: 26px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            color: var(--admin-primary);
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--admin-primary);
+            box-shadow: 0 0 8px rgba(44, 62, 80, 0.2);
+        }
+
+        .captcha-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .captcha-input-wrap {
+            flex-grow: 1;
+        }
+
+        .captcha-img-wrap {
+            height: 44px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #555;
+            width: 100px;
+            user-select: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--admin-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #34495e;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        button:disabled {
+            background-color: #bdc3c7 !important;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .error-msg {
+            color: #e74c3c;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .back-link a {
+            color: #7f8c8d;
+            text-decoration: none;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-container">
+        <h2>法樞控制台</h2>
+        <div class="subtitle">—— 管理者身分驗證 ——</div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>管理道號 (Email):</label>
+                <input type="text" id="email" required placeholder="請輸入管理者信箱">
+            </div>
+
+            <div class="form-group">
+                <label>禁制靈根 (密碼):</label>
+                <input type="password" id="password" required placeholder="請輸入密碼">
+            </div>
+
+            <div class="form-group">
+                <label>天機驗證 (點擊右側可更換):</label>
+                <div class="captcha-row">
+                    <div class="captcha-input-wrap">
+                        <input type="text" id="captcha" required placeholder="請輸入天機">
+                    </div>
+                    <div class="captcha-img-wrap" id="captchaDisplay" onclick="refreshCaptcha()" title="點擊更換天機">1 2 3 4</div>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">啟動控制台</button>
+            <div id="errorMsg" class="error-msg">❌ 道號或靈根錯誤，請重新參悟。</div>
+        </form>
+
+        <div class="back-link">
+            <a href="index.html">← 返回名單視窗</a>
+        </div>
+    </div>
+
+    <script>
+        // 預設的帳號資料庫
+        const adminUsers = [
+            { email: "SL056325405@gmail.com", pass: "sl056325405" },
+            { email: "SL05632540501@gmail.com", pass: "SL056325405" }
+        ];
+
+        let currentCaptcha = "";
+
+        /**
+         * 隨機產生 4 位數天機驗證碼
+         */
+        function refreshCaptcha() {
+            const digits = '0123456789';
+            let code = '';
+            for (let i = 0; i < 4; i++) {
+                code += digits[Math.floor(Math.random() * 10)];
+            }
+            currentCaptcha = code;
+            
+            // 隨機空格讓它看起來像真的驗證碼
+            document.getElementById('captchaDisplay').innerText = code.split('').join(' ');
+        }
+
+        // 初始化時產生一組
+        window.addEventListener('DOMContentLoaded', refreshCaptcha);
+
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const emailInput = document.getElementById('email').value.trim();
+            const passInput = document.getElementById('password').value.trim();
+            const captchaInput = document.getElementById('captcha').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            errorMsg.style.display = 'none';
+
+            // 1. 驗證天機
+            if (captchaInput !== currentCaptcha) {
+                alert("天機驗證失敗，請重新觀察天機！");
+                refreshCaptcha(); // 失敗後隨機更換
+                document.getElementById('captcha').value = "";
+                return;
+            }
+
+            // 2. 顯示登入中狀態
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '正在解開禁制...';
+
+            // 3. 檢查帳號密碼 (忽略大小寫以提升體驗)
+            const user = adminUsers.find(u => 
+                u.email.toLowerCase() === emailInput.toLowerCase() && 
+                u.pass === passInput
+            );
+
+            setTimeout(async () => {
+                if (user) {
+                    // 紀錄登入紀錄 (使用 await 確保寫入完成再跳轉)
+                    await recordLogin(user.email);
+                    
+                    // 儲存目前登入者資訊以供顯示
+                    localStorage.setItem('adminEmail', user.email);
+                    
+                    alert("驗證成功！即將進入法樞控制台。");
+                    // 登入成功後跳轉至管理者控制中心
+                    window.location.href = "admin_index.html";
+                } else {
+                    errorMsg.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '啟動控制台';
+                    refreshCaptcha(); // 失敗後隨機更換
+                    // 震動效果提醒
+                    const container = document.querySelector('.login-container');
+                    container.animate([
+                        { transform: 'translateX(-5px)' },
+                        { transform: 'translateX(5px)' },
+                        { transform: 'translateX(0)' }
+                    ], { duration: 100, iterations: 3 });
+                }
+            }, 800);
+        });
+
+        async function recordLogin(email) {
+            const supabase = window.getSupabase();
+            if (!supabase) return;
+            try {
+                // 使用 select() 確保請求發送成功
+                await supabase.from('login_history').insert({ email: email }).select();
+                console.log("登入紀錄已寫入");
+            } catch (e) {
+                console.error("無法紀錄登入時間:", e);
+            }
+        }
+    </script>
+</body>
+
+</html>
