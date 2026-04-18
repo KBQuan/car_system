@@ -277,6 +277,71 @@
             padding: 40px;
             color: #999;
         }
+
+        /* Idle Modal Style */
+        #idle-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .idle-content {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .idle-content h3 {
+            margin-top: 0;
+            color: var(--danger);
+            font-size: 24px;
+        }
+
+        .idle-timer-text {
+            font-size: 64px;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 20px 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .btn-continue {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .btn-continue:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
     </style>
 </head>
 
@@ -288,7 +353,7 @@
         <button class="nav-btn" onclick="showTab('personnel')">👥 名單管理</button>
         <button class="nav-btn" onclick="showTab('history')">📜 登入紀錄</button>
 
-        <button class="nav-btn logout-btn" onclick="window.location.href='index.html'"> 登出 </button>
+        <button class="nav-btn logout-btn" onclick="logoutAdmin()"> 登出 </button>
     </div>
 
     <div class="main-content">
@@ -401,6 +466,16 @@
         </div>
     </div>
 
+    <!-- 閒置警告 Modal -->
+    <div id="idle-modal">
+        <div class="idle-content">
+            <h3>⚠️ 登出警告</h3>
+            <p>您已閒置一段時間，系統即將登出...</p>
+            <div class="idle-timer-text" id="idle-countdown">30</div>
+            <button class="btn-continue" onclick="resetIdleTimerAndHide()">繼續使用</button>
+        </div>
+    </div>
+
     <!-- 編輯名單 Modal (簡單實現) -->
     <div id="editModal"
         style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
@@ -432,15 +507,87 @@
         let cloudRooms = [];
 
         async function initAdmin() {
+            // 驗證是否已登入
+            const adminEmail = localStorage.getItem('adminEmail');
+            if (!adminEmail) {
+                alert("請先登入管理員帳號！");
+                window.location.href = "admin.html";
+                return;
+            }
+
             await window.appDB.init();
-            
+
             // 顯示當前登入者
-            const adminEmail = localStorage.getItem('adminEmail') || '未知管理員';
             document.getElementById('adminUserDisplay').textContent = `👤 ${adminEmail}`;
 
             await loadSettings();
             await fetchCloudRooms();
             document.getElementById('syncStatus').textContent = '✅ 已連結雲端';
+
+            // 啟動閒置監測
+            initIdleMonitor();
+        }
+
+        function logoutAdmin() {
+            if (confirm("確定要登出管理員模式嗎？")) {
+                localStorage.removeItem('adminEmail');
+                window.location.href = "admin.html";
+            }
+        }
+
+        // --- 閒置登出計時邏輯 ---
+        let idleTimeout;
+        let countdownInterval;
+        const IDLE_LIMIT = 90 * 1000; // 90秒後出現提示
+        const COUNTDOWN_LIMIT = 30; // 30秒倒數
+
+        function initIdleMonitor() {
+            // 監聽各種互動行為
+            const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
+            events.forEach(evt => {
+                window.addEventListener(evt, resetIdleTimer, true);
+            });
+            startIdleTimer();
+        }
+
+        function startIdleTimer() {
+            clearTimeout(idleTimeout);
+            idleTimeout = setTimeout(showIdleModal, IDLE_LIMIT);
+        }
+
+        function resetIdleTimer() {
+            // 如果警告視窗沒開，就重設計時器
+            if (document.getElementById('idle-modal').style.display !== 'flex') {
+                startIdleTimer();
+            }
+        }
+
+        function resetIdleTimerAndHide() {
+            document.getElementById('idle-modal').style.display = 'none';
+            clearInterval(countdownInterval);
+            startIdleTimer();
+        }
+
+        function showIdleModal() {
+            document.getElementById('idle-modal').style.display = 'flex';
+            let remaining = COUNTDOWN_LIMIT;
+            document.getElementById('idle-countdown').textContent = remaining;
+
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                remaining--;
+                document.getElementById('idle-countdown').textContent = remaining;
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                    autoLogout();
+                }
+            }, 1000);
+        }
+
+        function autoLogout() {
+            localStorage.removeItem('adminEmail');
+            alert("您已因閒置過久被自動登出。");
+            window.location.href = "admin.html";
         }
 
         async function loadSettings() {

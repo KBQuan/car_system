@@ -181,7 +181,8 @@
                     <div class="captcha-input-wrap">
                         <input type="text" id="captcha" required placeholder="請輸入天機">
                     </div>
-                    <div class="captcha-img-wrap" id="captchaDisplay" onclick="refreshCaptcha()" title="點擊更換天機">1 2 3 4</div>
+                    <div class="captcha-img-wrap" id="captchaDisplay" onclick="refreshCaptcha()" title="點擊更換天機">1 2 3 4
+                    </div>
                 </div>
             </div>
 
@@ -195,12 +196,6 @@
     </div>
 
     <script>
-        // 預設的帳號資料庫
-        const adminUsers = [
-            { email: "SL056325405@gmail.com", pass: "sl056325405" },
-            { email: "SL05632540501@gmail.com", pass: "SL056325405" }
-        ];
-
         let currentCaptcha = "";
 
         /**
@@ -213,7 +208,7 @@
                 code += digits[Math.floor(Math.random() * 10)];
             }
             currentCaptcha = code;
-            
+
             // 隨機空格讓它看起來像真的驗證碼
             document.getElementById('captchaDisplay').innerText = code.split('').join(' ');
         }
@@ -221,7 +216,7 @@
         // 初始化時產生一組
         window.addEventListener('DOMContentLoaded', refreshCaptcha);
 
-        document.getElementById('loginForm').addEventListener('submit', function (e) {
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const emailInput = document.getElementById('email').value.trim();
@@ -244,20 +239,29 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '正在解開禁制...';
 
-            // 3. 檢查帳號密碼 (忽略大小寫以提升體驗)
-            const user = adminUsers.find(u => 
-                u.email.toLowerCase() === emailInput.toLowerCase() && 
-                u.pass === passInput
-            );
+            const supabase = window.getSupabase();
+            if (!supabase) {
+                alert("系統錯誤：無法連結至資料庫");
+                submitBtn.disabled = false;
+                return;
+            }
+
+            // 3. 查詢雲端帳號資料庫 (隱藏式的驗證)
+            const { data: user, error } = await supabase
+                .from('admin_users')
+                .select('*')
+                .eq('email', emailInput)
+                .eq('password', passInput)
+                .single();
 
             setTimeout(async () => {
-                if (user) {
+                if (user && !error) {
                     // 紀錄登入紀錄 (使用 await 確保寫入完成再跳轉)
                     await recordLogin(user.email);
-                    
+
                     // 儲存目前登入者資訊以供顯示
                     localStorage.setItem('adminEmail', user.email);
-                    
+
                     alert("驗證成功！即將進入法樞控制台。");
                     // 登入成功後跳轉至管理者控制中心
                     window.location.href = "admin_index.html";
