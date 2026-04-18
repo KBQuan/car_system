@@ -30,13 +30,8 @@ async function init() {
             document.getElementById('vehicleCount').value = vehicleCountData.value;
         }
 
-        // 載入更新紀錄
-        const updateNotesData = await window.appDB.getSetting('updateNotesList');
-        if (updateNotesData && updateNotesData.value) {
-            updateNotesList = JSON.parse(updateNotesData.value);
-        }
-        renderUpdateNotes();
         await loadUserSettings();
+        await loadSystemConfig(); // 載入系統動態設定 (版本、說明書、房間預設)
 
         // 載入鎖定狀態
         const locks = await window.appDB.getLocks();
@@ -531,86 +526,6 @@ function toggleSidebar() {
     body.classList.toggle('sidebar-open');
 }
 
-let updateNotesList = [];
-
-function renderUpdateNotes() {
-    const listDiv = document.getElementById('notes-list');
-    listDiv.innerHTML = '';
-
-    if (updateNotesList.length === 0) {
-        listDiv.innerHTML = '<div style="color: #999; font-size: 13px; text-align: center; padding: 10px;">目前尚無任何更新公告</div>';
-        return;
-    }
-
-    updateNotesList.forEach(note => {
-        const item = document.createElement('div');
-        item.style.cssText = 'background: #fdfdfd; padding: 10px; border-radius: 5px; border: 1px solid #e0e0e0;';
-        item.innerHTML = `
-            <div style="font-size: 12px; color: #888; margin-bottom: 5px;">📅 ${note.date}</div>
-            <div style="white-space: pre-wrap; font-size: 14px; color: #333; margin-bottom: 10px;">${note.text}</div>
-            <div style="display: flex; gap: 5px; justify-content: flex-end;">
-                <button onclick="editNote(${note.id})" style="background: #2196f3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">✏️ 編輯</button>
-                <button onclick="deleteNote(${note.id})" style="background: #ef5350; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">🗑️ 刪除</button>
-            </div>
-        `;
-        listDiv.appendChild(item);
-    });
-}
-
-// 更新日誌 發佈
-async function publishUpdateNotes() {
-    const textarea = document.getElementById('update-notes-area');
-    const text = textarea.value.trim();
-    if (!text) return;
-
-    const editId = document.getElementById('editing-note-id').value;
-
-    if (editId) {
-        // 編輯模式
-        const note = updateNotesList.find(n => n.id == editId);
-        if (note) {
-            note.text = text;
-        }
-        document.getElementById('editing-note-id').value = '';
-        document.getElementById('cancel-edit-btn').style.display = 'none';
-    } else {
-        // 新增模式
-        const now = new Date();
-        const dateStr = now.toLocaleString('zh-TW', { hour12: false });
-        updateNotesList.unshift({
-            id: Date.now(),
-            text: text,
-            date: dateStr
-        });
-    }
-
-    await window.appDB.saveSetting('updateNotesList', JSON.stringify(updateNotesList));
-    textarea.value = '';
-    renderUpdateNotes();
-}
-
-function editNote(id) {
-    const note = updateNotesList.find(n => n.id == id);
-    if (note) {
-        document.getElementById('update-notes-area').value = note.text;
-        document.getElementById('editing-note-id').value = note.id;
-        document.getElementById('cancel-edit-btn').style.display = 'block';
-    }
-}
-
-function cancelEditNote() {
-    document.getElementById('update-notes-area').value = '';
-    document.getElementById('editing-note-id').value = '';
-    document.getElementById('cancel-edit-btn').style.display = 'none';
-}
-
-async function deleteNote(id) {
-    if (confirm('確定要刪除這則貼文嗎？')) {
-        updateNotesList = updateNotesList.filter(n => n.id != id);
-        await window.appDB.saveSetting('updateNotesList', JSON.stringify(updateNotesList));
-        renderUpdateNotes();
-    }
-}
 
 // 進度儲存 - 匯出
 async function exportJSONBackup() {
@@ -667,17 +582,13 @@ async function importJSONBackup(event) {
 
 // 供外部綁定事件
 window.toggleSidebar = toggleSidebar;
-window.publishUpdateNotes = publishUpdateNotes;
-window.editNote = editNote;
-window.cancelEditNote = cancelEditNote;
-window.deleteNote = deleteNote;
 window.exportPNG = exportPNG;
 window.exportJSONBackup = exportJSONBackup;
 window.importJSONBackup = importJSONBackup;
 window.resetVehicle = resetVehicle;
-
-// 頁面開啟時啟動
-window.onload = init;
+window.deleteSelected = deleteSelected;
+window.clearAllPersons = clearAllPersons;
+window.init = init;
 
 // 邊框發光追蹤
 window.addEventListener('mousemove', (e) => {
@@ -822,3 +733,150 @@ window.updateGlowOpacity = updateGlowOpacity;
 window.toggleGlow = toggleGlow;
 window.previewGlow = previewGlow;
 window.resetSettings = resetSettings;
+
+// --- 管理者權限控管 ---
+
+/**
+ * 檢查目前是否具備管理者權限 (從 URL 參數或來源頁面判斷)
+ */
+function checkAdminStatus() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.get('admin') === 'true';
+
+    if (isAdmin) {
+        document.body.classList.add('admin-mode');
+        // 顯示所有管理者專用元素
+        document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.display = 'block';
+        });
+
+        // 調整登入/登出按鈕顯示
+        const loginLink = document.getElementById('adminLoginLink');
+        const logoutBtn = document.getElementById('adminLogoutBtn');
+        if (loginLink) loginLink.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'block';
+
+        console.log("🛡️ 目前處於管理者模式");
+    }
+}
+
+/**
+ * 登出管理者模式
+ */
+function logoutAdmin() {
+    if (confirm("確定要登出管理模式並返回一般檢視嗎？")) {
+        // 移除 URL 中的 admin 參數並重新整理
+        const url = new URL(window.location.href);
+        url.searchParams.delete('admin');
+        window.location.href = url.pathname;
+    }
+}
+
+window.logoutAdmin = logoutAdmin;
+
+// 修改載入邏輯，加入權限檢查
+// 將需要全域訪問的函式掛載到 window
+window.logoutAdmin = logoutAdmin;
+window.checkAdminStatus = checkAdminStatus;
+
+const originalInit = window.onload;
+window.onload = async () => {
+    // 確保 init 先執行
+    await init();
+    
+    // 再執行原本可能存在的 onload 或權限檢查
+    if (typeof originalInit === 'function' && originalInit !== init) {
+        await originalInit();
+    }
+    checkAdminStatus();
+};
+
+/**
+ * 載入系統全域設定 (由 admin_index.html 管理，優先從 Supabase 抓取)
+ */
+async function loadSystemConfig() {
+    const GLOBAL_ROOM = 'SYSTEM_GLOBAL';
+    const supabase = window.getSupabase();
+    
+    // 試著從 Supabase 抓取全域設定
+    let remoteSettings = {};
+    if (supabase) {
+        try {
+            const { data, error } = await supabase
+                .from('settings')
+                .select('*')
+                .eq('room_id', GLOBAL_ROOM);
+            
+            if (!error && data) {
+                data.forEach(s => {
+                    remoteSettings[s.key] = s.value;
+                    // 同步到本地 DB 以備離線使用
+                    window.appDB.saveSetting(s.key, s.value, false); // false 表示不觸發同步推送到當前房間
+                });
+            }
+        } catch (e) {
+            console.warn("[System] 抓取雲端全域設定失敗，將使用本地快取", e);
+        }
+    }
+
+    // 1. 載入版本號
+    const versionData = await window.appDB.getSetting('system_version');
+    const versionVal = remoteSettings['system_version'] || versionData.value;
+    if (versionVal) {
+        document.querySelectorAll('.version-info').forEach(el => {
+            el.textContent = `${versionVal} 版™`;
+        });
+    }
+
+    // 2. 載入說明書內容
+    const manualData = await window.appDB.getSetting('user_manual');
+    const manualVal = remoteSettings['user_manual'] || manualData.value;
+    if (manualVal) {
+        const container = document.querySelector('#manualModal .manual-body');
+        if (container) container.innerHTML = manualVal;
+    }
+
+    // 3. 載入房間預設
+    const roomsData = await window.appDB.getSetting('room_presets');
+    const roomsVal = remoteSettings['room_presets'] || roomsData.value;
+    if (roomsVal) {
+        try {
+            const roomList = JSON.parse(roomsVal);
+            renderRoomPresets(roomList);
+        } catch(e) { console.error("解析房間預設失敗", e); }
+    }
+}
+
+/**
+ * 渲染房間預設選單
+ */
+function renderRoomPresets(roomList) {
+    const container = document.getElementById('roomPresetContainer');
+    if (!container) return;
+    
+    if (!roomList || !roomList.length) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'block';
+    container.innerHTML = '<small style="color: #666; display: block; margin-bottom: 5px;">快速選擇房間：</small>';
+    const select = document.createElement('select');
+    select.style.cssText = 'width: 100%; margin-bottom: 10px; font-size: 14px; padding: 8px; border-radius: 4px; border: 1px solid #ddd;';
+    select.innerHTML = '<option value="">-- 請選擇房間 --</option>';
+    
+    roomList.forEach(room => {
+        const opt = document.createElement('option');
+        opt.value = room;
+        opt.textContent = room;
+        select.appendChild(opt);
+    });
+
+    select.onchange = () => {
+        if (select.value) {
+            document.getElementById('roomIdInput').value = select.value;
+        }
+    };
+
+    container.appendChild(select);
+}

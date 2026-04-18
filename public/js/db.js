@@ -166,10 +166,10 @@ class AppDB {
         return res || {};
     }
 
-    async saveSetting(key, value) {
+    async saveSetting(key, value, shouldSync = true) {
         const data = { key, value };
         await this._put('settings', data);
-        if (window.syncManager) await window.syncManager.pushChange('settings', 'put', data);
+        if (shouldSync && window.syncManager) await window.syncManager.pushChange('settings', 'put', data);
     }
 
     async getLocks() {
