@@ -280,11 +280,11 @@ async function deleteSelected() {
     const names = Array.from(selectedPeople).join('、');
     if (confirm(`確定要將以下人員從資料庫永久刪除嗎?\n\n${names}`)) {
         if (window.syncManager) window.syncManager.isBulkOperating = true;
-        
+
         for (const name of selectedPeople) {
             await window.appDB.deletePassenger(name);
         }
-        
+
         if (window.syncManager && window.syncManager.currentRoom) {
             await window.syncManager.pushFullState();
         } else if (window.syncManager) {
@@ -405,7 +405,7 @@ async function toggleLock(id) {
     });
 
     vehicles.forEach(veh => container.appendChild(veh));
-    
+
     // 確保同步到雲端
     if (window.syncManager) {
         await window.syncManager.pushChange('locks', 'put', { vehicle_id: id, is_locked: isLocked ? 1 : 0 });
@@ -427,7 +427,7 @@ async function importExcel(event) {
             const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
             let importCount = 0;
-            
+
             // 開啟大量匯入防護鎖
             if (window.syncManager) window.syncManager.isBulkOperating = true;
 
@@ -578,17 +578,17 @@ async function importJSONBackup(event) {
     reader.onload = async function (e) {
         try {
             const data = JSON.parse(e.target.result);
-            
+
             if (window.syncManager) window.syncManager.isBulkOperating = true;
-            
+
             await window.appDB.importData(data);
-            
+
             if (window.syncManager && window.syncManager.currentRoom) {
                 await window.syncManager.pushFullState();
             } else if (window.syncManager) {
                 window.syncManager.isBulkOperating = false;
             }
-            
+
             alert('✅ 成功匯入進度！');
             // 直接重新渲染
             location.reload();
@@ -620,7 +620,7 @@ window.addEventListener('mousemove', (e) => {
     glowElements.forEach(el => {
         const rect = el.getBoundingClientRect();
         // 只有當滑鼠在元素附近一定範圍內才更新，提升效能
-        const buffer = 150; 
+        const buffer = 150;
         if (e.clientX >= rect.left - buffer && e.clientX <= rect.right + buffer &&
             e.clientY >= rect.top - buffer && e.clientY <= rect.bottom + buffer) {
             const x = e.clientX - rect.left;
@@ -648,7 +648,7 @@ function applyUserSettings(settings) {
     const r = parseInt(settings.color.slice(1, 3), 16);
     const g = parseInt(settings.color.slice(3, 5), 16);
     const b = parseInt(settings.color.slice(5, 7), 16);
-    
+
     const opacity = settings.opacity !== undefined ? settings.opacity : 0.7;
     const enabled = settings.enabled !== undefined ? settings.enabled : true;
 
@@ -674,7 +674,7 @@ function applyUserSettings(settings) {
 
     const picker = document.getElementById('glowColorPicker');
     if (picker) picker.value = settings.color;
-    
+
     const colorDisplay = document.getElementById('colorValueDisplay');
     if (colorDisplay) colorDisplay.textContent = settings.color.toUpperCase();
 
@@ -701,7 +701,7 @@ function applyUserSettings(settings) {
 async function changeGlowColor(hex) {
     const settingsData = await window.appDB.getSetting('userGlowSettings');
     const settings = settingsData && settingsData.value ? JSON.parse(settingsData.value) : { color: '#808080', size: 150, opacity: 0.7, enabled: true };
-    
+
     settings.color = hex;
     await window.appDB.saveSetting('userGlowSettings', JSON.stringify(settings));
     applyUserSettings(settings);
@@ -710,7 +710,7 @@ async function changeGlowColor(hex) {
 async function updateGlowSize(size) {
     const settingsData = await window.appDB.getSetting('userGlowSettings');
     const settings = settingsData && settingsData.value ? JSON.parse(settingsData.value) : { color: '#808080', size: 150, opacity: 0.7, enabled: true };
-    
+
     settings.size = parseInt(size);
     await window.appDB.saveSetting('userGlowSettings', JSON.stringify(settings));
     applyUserSettings(settings);
@@ -719,7 +719,7 @@ async function updateGlowSize(size) {
 async function updateGlowOpacity(opacity) {
     const settingsData = await window.appDB.getSetting('userGlowSettings');
     const settings = settingsData && settingsData.value ? JSON.parse(settingsData.value) : { color: '#808080', size: 150, opacity: 0.7, enabled: true };
-    
+
     settings.opacity = parseFloat(opacity);
     await window.appDB.saveSetting('userGlowSettings', JSON.stringify(settings));
     applyUserSettings(settings);
@@ -728,7 +728,7 @@ async function updateGlowOpacity(opacity) {
 async function toggleGlow(enabled) {
     const settingsData = await window.appDB.getSetting('userGlowSettings');
     const settings = settingsData && settingsData.value ? JSON.parse(settingsData.value) : { color: '#808080', size: 150, opacity: 0.7, enabled: true };
-    
+
     settings.enabled = enabled;
     await window.appDB.saveSetting('userGlowSettings', JSON.stringify(settings));
     applyUserSettings(settings);
@@ -830,7 +830,7 @@ window.addEventListener('load', async () => {
 async function loadSystemConfig() {
     const GLOBAL_ROOM = 'SYSTEM_GLOBAL';
     const supabase = window.getSupabase();
-    
+
     // 試著從 Supabase 抓取全域設定
     let remoteSettings = {};
     if (supabase) {
@@ -839,7 +839,7 @@ async function loadSystemConfig() {
                 .from('settings')
                 .select('*')
                 .eq('room_id', GLOBAL_ROOM);
-            
+
             if (!error && data) {
                 data.forEach(s => {
                     remoteSettings[s.key] = s.value;
@@ -857,7 +857,7 @@ async function loadSystemConfig() {
     const versionVal = remoteSettings['system_version'] || versionData.value;
     if (versionVal) {
         document.querySelectorAll('.version-info').forEach(el => {
-            el.innerHTML = `${versionVal} 版™ <i data-lucide="copyright" style="width: 12px; height: 12px;"></i>`;
+            el.innerHTML = `${versionVal} <i data-lucide="copyright" style="width: 12px; height: 12px;"></i>`;
         });
         if (typeof lucide !== 'undefined') lucide.createIcons();
 
@@ -895,7 +895,7 @@ async function loadSystemConfig() {
         try {
             const roomList = JSON.parse(roomsVal);
             renderRoomPresets(roomList);
-        } catch(e) { console.error("解析房間預設失敗", e); }
+        } catch (e) { console.error("解析房間預設失敗", e); }
     }
 }
 
@@ -905,7 +905,7 @@ async function loadSystemConfig() {
 function renderRoomPresets(roomList) {
     const container = document.getElementById('roomPresetContainer');
     if (!container) return;
-    
+
     if (!roomList || !roomList.length) {
         container.style.display = 'none';
         return;
@@ -916,7 +916,7 @@ function renderRoomPresets(roomList) {
     const select = document.createElement('select');
     select.style.cssText = 'width: 100%; margin-bottom: 10px; font-size: 14px; padding: 8px; border-radius: 4px; border: 1px solid #ddd;';
     select.innerHTML = '<option value="">-- 請選擇房間 --</option>';
-    
+
     roomList.forEach(room => {
         const opt = document.createElement('option');
         opt.value = room;
