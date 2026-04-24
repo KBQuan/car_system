@@ -16,747 +16,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/db.js"></script>
     <script src="js/supabase.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="js/sync-manager.js"></script>
-    <style>
-        /* 側邊欄樣式 */
-        #sidebar {
-            position: fixed;
-            top: 0;
-            left: -320px;
-            /* 預設隱藏 */
-            width: 320px;
-            height: 100vh;
-            background: #fff;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-            transition: 0.3s;
-            z-index: 1000;
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: left;
-            overflow-y: auto;
-        }
-
-        #sidebar.open {
-            left: 0;
-        }
-
-        .sidebar-toggle-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1001;
-            background: #2c3e50;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            transition: left 0.3s;
-        }
-
-        body.sidebar-open .sidebar-toggle-btn {
-            left: 340px;
-        }
-
-        #sidebar h3 {
-            margin-top: 5px;
-            color: #2c3e50;
-        }
-
-
-
-        .update-notes-container {
-            margin-top: 20px;
-        }
-
-        .update-notes-container textarea {
-            width: 100%;
-            height: 150px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 10px;
-            resize: vertical;
-            font-family: inherit;
-            box-sizing: border-box;
-            margin-top: 5px;
-        }
-
-        .update-notes-container textarea:focus {
-            outline: none;
-            border-color: #2196f3;
-        }
-
-        #content-wrapper {
-            transition: margin-left 0.3s;
-        }
-
-        body.sidebar-open #content-wrapper {
-            margin-left: 320px;
-        }
-
-        :root {
-            --male-color: #1976d2;
-            --male-bg: #e3f2fd;
-            --female-color: #c2185b;
-            --female-bg: #fce4ec;
-        }
-
-        .draggable.selected {
-            border: 2px solid #ff9800 !important;
-            box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
-            background: #fff3e0 !important;
-        }
-
-        .action-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-
-        .action-buttons button {
-            padding: 8px 15px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            color: white;
-            transition: 0.3s;
-        }
-
-        .btn-delete-selected {
-            background: #ff9800;
-        }
-
-        .btn-clear-all {
-            background: #ef5350;
-        }
-
-        .action-buttons button:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        body {
-            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-            background-color: #f4f7f9;
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-            min-height: 100vh;
-        }
-
-        h2 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        /* 側邊欄摺疊樣式 */
-        .sidebar-section-header {
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 2px solid #eee;
-            margin-top: 20px !important;
-            user-select: none;
-        }
-
-        .sidebar-section-header:hover {
-            color: #2196f3;
-        }
-
-        .sidebar-section-header::after {
-            content: '▼';
-            font-size: 12px;
-            transition: transform 0.3s;
-            color: #999;
-        }
-
-        .sidebar-section-header.collapsed::after {
-            transform: rotate(-90deg);
-        }
-
-        .sidebar-section-content {
-            display: grid;
-            grid-template-rows: 1fr;
-            margin-top: 10px;
-            transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 1, 1), margin-top 0.3s cubic-bezier(0.4, 0, 1, 1);
-        }
-
-        .sidebar-section-content>div {
-            overflow: hidden;
-            min-height: 0;
-        }
-
-        .sidebar-section-content.hidden {
-            grid-template-rows: 0fr;
-            margin-top: 0;
-        }
-
-        /* 介面設定控制項 */
-        .settings-group {
-            background: #fff;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #eee;
-            margin-bottom: 20px;
-        }
-
-        .settings-item {
-            margin-bottom: 20px;
-        }
-
-        .settings-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .settings-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: bold;
-            margin-bottom: 12px;
-            color: #455a64;
-        }
-
-        /* 切換開關 (Switch) */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider-round {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .slider-round:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked+.slider-round {
-            background-color: #2196f3;
-        }
-
-        input:checked+.slider-round:before {
-            transform: translateX(26px);
-        }
-
-        /* 預設顏色按鈕 */
-        .preset-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .preset-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: 2px solid white;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: 0.2s;
-            padding: 0;
-            margin: 0;
-        }
-
-        .preset-btn:hover {
-            transform: scale(1.2);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .preset-btn.active {
-            border-color: #2196f3;
-            transform: scale(1.1);
-        }
-
-        /* 預覽卡片 */
-        .preview-card-container {
-            margin-top: 10px;
-            padding: 30px;
-            background: #f8fafc;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 1px dashed #cbd5e0;
-        }
-
-        .preview-card {
-            width: 120px;
-            height: 60px;
-            background: white;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 12px;
-            font-weight: bold;
-            color: #64748b;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        /* 邊框發光效果 (Reveal Effect) */
-        .glow-border {
-            position: relative;
-            background-color: white !important;
-            background-clip: padding-box;
-            border: 1px solid rgba(0, 0, 0, 0.05) !important;
-            transition: border-color 0.3s;
-        }
-
-        .glow-border::before {
-            content: "";
-            position: absolute;
-            inset: -1px;
-            pointer-events: none;
-            background: radial-gradient(circle var(--glow-size, 150px) at var(--mouse-x, -500px) var(--mouse-y, -500px),
-                    var(--glow-color, rgba(128, 128, 128, 0.7)),
-                    transparent);
-            z-index: -1;
-            border-radius: inherit;
-            transition: opacity 0.3s;
-            opacity: 0;
-        }
-
-        body.glow-disabled .glow-border::before {
-            display: none !important;
-        }
-
-        .glow-border:hover::before {
-            opacity: 1;
-        }
-
-        .glow-border:hover {
-            border-color: rgba(128, 128, 128, 0.2) !important;
-        }
-
-        /* 控制面板 */
-        .controls {
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: inline-block;
-            margin-bottom: 20px;
-            max-width: 95%;
-        }
-
-        .control-row {
-            margin-bottom: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .vehicle-count-row {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-
-        input[type="text"],
-        select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-            margin: 0 5px;
-        }
-
-        button:hover {
-            opacity: 0.8;
-        }
-
-        .import-btn {
-            background: #4caf50;
-            color: white;
-        }
-
-        .export-btn {
-            background: #2196f3;
-            color: white;
-        }
-
-        .export-excel-btn {
-            background: #4caf50;
-            color: white;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            display: inline-block;
-            margin: 5px;
-        }
-
-        .file-input-wrapper input[type="file"] {
-            position: absolute;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        /* 刪除/重置按鈕區 */
-        .action-buttons {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-
-        .delete-btn {
-            background: #ff9800;
-            color: white;
-        }
-
-        .reset-btn {
-            background: #ff9800;
-            color: white;
-        }
-
-        /* 名單區域 */
-        .lists {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-
-        .list {
-            background: white;
-            border-radius: 10px;
-            width: 350px;
-            min-height: 120px;
-            padding: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .list h4 {
-            margin-top: 0;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        /* 拖拽元件樣式 */
-        .draggable {
-            padding: 8px 16px;
-            margin: 6px;
-            cursor: move;
-            border-radius: 25px;
-            display: inline-block;
-            font-weight: bold;
-            font-size: 14px;
-            user-select: none;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s, background 0.2s;
-            position: relative;
-        }
-
-        .draggable:active {
-            cursor: grabbing;
-            transform: scale(1.05);
-        }
-
-        .draggable.selected {
-            box-shadow: 0 0 0 3px #ffd54f;
-            transform: scale(1.05);
-        }
-
-        .draggable.in-locked-vehicle {
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-
-        .male {
-            background: var(--male-bg);
-            color: var(--male-color);
-            border: 1px solid #bbdefb;
-        }
-
-        .female {
-            background: var(--female-bg);
-            color: var(--female-color);
-            border: 1px solid #f8bbd0;
-        }
-
-        /* 車輛網格區域 */
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        .vehicle {
-            background: white;
-            border-radius: 15px;
-            padding: 15px;
-            width: 280px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            border: 2px solid transparent;
-            transition: 0.3s;
-        }
-
-        .vehicle.locked {
-            background: #e9ecef;
-            border-color: #adb5bd;
-        }
-
-        .vehicle.locked .seat {
-            background: #dee2e6;
-            border-style: solid;
-            cursor: not-allowed;
-        }
-
-        .vehicle-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .vehicle-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-
-        .vehicle-owner-input {
-            width: 100%;
-            padding: 6px 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 13px;
-            text-align: center;
-        }
-
-        .vehicle-owner-input:focus {
-            outline: none;
-            border-color: #2196f3;
-        }
-
-        .lock-btn {
-            background: none;
-            border: 1px solid #ddd;
-            font-size: 18px;
-            padding: 5px 10px;
-            border-radius: 50%;
-        }
-
-        /* 座位配置 */
-        .seat-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .seat {
-            height: 55px;
-            border: 2px dashed #cbd5e0;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f8fafc;
-            font-size: 13px;
-            color: #a0aec0;
-            overflow: hidden;
-        }
-
-        .version-info {
-            text-align: center;
-            color: #999;
-            font-size: 13px;
-            padding: 40px 10px 20px 10px;
-            margin-top: 20px;
-        }
-
-        /* Modal 樣式 */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(2px);
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateY(-30px) scale(0.95);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0) scale(1);
-                opacity: 1;
-            }
-        }
-
-        @keyframes floatInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 25px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 600px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            position: relative;
-            animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            /* 更有彈性的浮現效果 */
-        }
-
-        /* 預設隱藏內容，等 active 觸發進場 */
-        .manual-body>h3,
-        .manual-body>ul {
-            opacity: 0;
-        }
-
-        /* 說明書內容分段浮出效果 (僅在 active 時觸發) */
-        .modal.active .manual-body>h3,
-        .modal.active .manual-body>ul {
-            opacity: 0;
-            animation: floatInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-        }
-
-        .modal.active .manual-body>h3:nth-of-type(1) {
-            animation-delay: 0.1s;
-        }
-
-        .modal.active .manual-body>ul:nth-of-type(1) {
-            animation-delay: 0.2s;
-        }
-
-        .modal.active .manual-body>h3:nth-of-type(2) {
-            animation-delay: 0.3s;
-        }
-
-        .modal.active .manual-body>ul:nth-of-type(2) {
-            animation-delay: 0.4s;
-        }
-
-        .modal.active .manual-body>h3:nth-of-type(3) {
-            animation-delay: 0.5s;
-        }
-
-        .modal.active .manual-body>ul:nth-of-type(3) {
-            animation-delay: 0.6s;
-        }
-
-        .modal.active .manual-body>h3:nth-of-type(4) {
-            animation-delay: 0.7s;
-        }
-
-        .modal.active .manual-body>ul:nth-of-type(4) {
-            animation-delay: 0.8s;
-        }
-
-        .close-modal {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            position: absolute;
-            right: 20px;
-            top: 15px;
-        }
-
-        .close-modal:hover,
-        .close-modal:focus {
-            color: #333;
-            text-decoration: none;
-        }
-
-        .manual-body {
-            max-height: 60vh;
-            overflow-y: auto;
-            text-align: left;
-            line-height: 1.6;
-        }
-
-        .manual-body h3 {
-            color: #1976d2;
-            border-bottom: 2px solid #e3f2fd;
-            padding-bottom: 5px;
-            margin-top: 20px;
-            font-size: 18px;
-        }
-
-        .manual-body ul {
-            padding-left: 20px;
-            font-size: 15px;
-        }
-
-        .manual-body li {
-            margin-bottom: 8px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/index.css">
 </head>
+
 
 <body ondragover="event.preventDefault()" ondrop="dropToVoid(event)">
 
@@ -766,114 +31,173 @@
     </button>
 
     <!-- 側邊欄 -->
+
     <div id="sidebar">
-        <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">📖 使用說明</h3>
-        <div class="sidebar-section-content hidden">
-            <div style="overflow: hidden; min-height: 0;">
-                <div class="glow-border"
-                    style="padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-                    <button onclick="openManual()"
-                        style="background: #ffb74d; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 16px; font-weight: bold;">📖
-                        閱讀使用說明書</button>
-                </div>
-            </div>
+        <div class="sidebar-brand">
+            <i data-lucide="layout-grid" style="color: #2563eb;"></i>
+            <h2>功能面板</h2>
         </div>
 
-        <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">🌐 多人即時協作</h3>
-        <div class="sidebar-section-content hidden">
-            <div style="overflow: hidden; min-height: 0;">
-                <div class="glow-border"
-                    style="padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-                    <small style="color: #666;">輸入房間 ID 以加入共編，或分享目前的網址給他人。</small>
+        <div class="sidebar-scroll-area">
+            <div class="nav-item nav-item-pill" onclick="openManual()">
+                <i data-lucide="book-open"></i>
+                <span class="label">使用說明書</span>
+            </div>
 
-                    <!-- 房間預設選單容器 -->
-                    <div id="roomPresetContainer" style="display: none; margin-bottom: 10px;"></div>
+            <div class="nav-item nav-item-pill-update" onclick="openUpdates()">
+                <i data-lucide="sparkles"></i>
+                <span class="label">近期更新</span>
+            </div>
 
-                    <input type="text" id="roomIdInput" placeholder="輸入房間名稱或 ID"
-                        style="width: 100%; box-sizing: border-box;">
-                    <button onclick="joinRoom()"
-                        style="background: #9c27b0; color: white; width: 100%; margin: 0; padding: 10px; border-radius: 6px;">🔗
-                        加入/建立房間</button>
-                    <div id="roomStatus"
-                        style="font-size: 12px; color: #7b1fa2; font-weight: bold; text-align: center; display: none;">
-                        同步中：<span id="activeRoomId"></span>
-                        <button onclick="leaveRoom()"
-                            style="background: #ef5350; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; margin-left: 10px; font-size: 11px;">退出同步</button>
+            <div class="nav-item" onclick="openSettings()">
+                <i data-lucide="settings"></i>
+                <span class="label">介面設定</span>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="users" style="width: 16px; height: 16px;"></i> 多人即時協作
+                </span>
+                <i data-lucide="chevron-down" class="chevron"></i>
+            </h3>
+            <div class="sidebar-section-content hidden">
+                <div>
+                    <div class="glass-panel"
+                        style="padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                        <small style="color: #666;">輸入房間 ID 以加入共編。</small>
+
+                        <!-- 房間預設選單容器 -->
+                        <div id="roomPresetContainer" style="display: none; margin-bottom: 10px;"></div>
+
+                        <input type="text" id="roomIdInput" placeholder="輸入房間名稱"
+                            style="width: 100%; box-sizing: border-box;">
+                        <button class="glass-btn primary" onclick="joinRoom()"
+                            style="width: 100%; margin: 0; padding: 10px; border-radius: 6px;">
+                            <i data-lucide="link"
+                                style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                            加入房間
+                        </button>
+                        <div id="roomStatus"
+                            style="font-size: 12px; color: #7b1fa2; font-weight: bold; text-align: center; display: none;">
+                            同步中：<span id="activeRoomId"></span>
+                            <button class="glass-btn danger" onclick="leaveRoom()"
+                                style="border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; margin-left: 10px; font-size: 11px;">退出</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">💾 進度儲存管理</h3>
-        <div class="sidebar-section-content hidden">
-            <div style="overflow: hidden; min-height: 0;">
-                <div class="glow-border"
-                    style="padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
-                    <small style="color: #666;">可將目前的車位安排匯出成進度檔留存，或將先前的進度匯入接續作業。</small>
-                    <button onclick="exportJSONBackup()"
-                        style="background: #2196f3; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 16px; font-weight: bold;">💾
-                        匯出進度檔 (JSON)</button>
-                    <label
-                        style="background: #ff9800; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; text-align: center; font-size: 16px; font-weight: bold;">
-                        ⬇️ 匯入進度檔 (JSON)
-                        <input type="file" accept=".json" onchange="importJSONBackup(event)" style="display: none;">
-                    </label>
+            <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="archive" style="width: 16px; height: 16px;"></i> 進度儲存
+                </span>
+                <i data-lucide="chevron-down" class="chevron"></i>
+            </h3>
+            <div class="sidebar-section-content hidden">
+                <div>
+                    <div class="glass-panel"
+                        style="padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+                        <button class="glass-btn info" onclick="exportJSONBackup()"
+                            style="border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 14px; font-weight: bold;">
+                            <i data-lucide="download"
+                                style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                            匯出進度檔
+                        </button>
+                        <label class="glass-btn warning"
+                            style="cursor: pointer; display: block; border-radius: 6px; padding: 10px; text-align: center; font-size: 14px; font-weight: bold;">
+                            <i data-lucide="upload"
+                                style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                            匯入進度檔
+                            <input type="file" accept=".json" onchange="importJSONBackup(event)" style="display: none;">
+                        </label>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">📊 檔案匯出與匯入</h3>
-        <div class="sidebar-section-content hidden">
-            <div style="overflow: hidden; min-height: 0;">
-                <div class="glow-border"
-                    style="padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
-                    <label class="import-btn"
-                        style="cursor: pointer; display: block; border-radius: 6px; font-weight: bold; background: #4caf50; color: white; padding: 10px; line-height: normal; margin: 0; text-align: center; font-size: 16px;">
-                        📥 匯入 Excel 名單
-                        <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="importExcel(event)"
-                            style="display: none;">
-                    </label>
-                    <button class="export-excel-btn" onclick="exportExcel()"
-                        style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📊
-                        匯出 Excel </button>
-                    <button class="export-btn" onclick="exportPNG()"
-                        style="width: 100%; margin: 0; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 6px;">📄
-                        匯出 PNG 車位圖</button>
+            <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="file-spreadsheet" style="width: 16px; height: 16px;"></i> 資料交換
+                </span>
+                <i data-lucide="chevron-down" class="chevron"></i>
+            </h3>
+            <div class="sidebar-section-content hidden">
+                <div>
+                    <div class="glass-panel"
+                        style="padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+                        <label class="glass-btn success"
+                            style="cursor: pointer; display: block; border-radius: 6px; font-weight: bold; padding: 10px; line-height: normal; margin: 0; text-align: center; font-size: 14px;">
+                            <i data-lucide="file-up"
+                                style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                            匯入 Excel 名單
+                            <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="importExcel(event)"
+                                style="display: none;">
+                        </label>
+                        <button class="glass-btn secondary export-excel-btn" onclick="exportExcel()"
+                            style="width: 100%; margin: 0; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 6px;">
+                            <i data-lucide="file-down"
+                                style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                            匯出 Excel
+                        </button>
+                        <button class="glass-btn secondary export-btn" onclick="exportPNG()"
+                            style="width: 100%; margin: 0; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 6px;">
+                            <i data-lucide="image"
+                                style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
+                            匯出 PNG 圖片
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
 
+            <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="shield-lock" style="width: 16px; height: 16px;"></i> 安全管理
+                </span>
+                <i data-lucide="chevron-down" class="chevron"></i>
+            </h3>
 
-        <h3 class="sidebar-section-header collapsed" onclick="toggleSection(this)">🛡️ 系統管理</h3>
-        <div class="sidebar-section-content hidden">
-            <div style="overflow: hidden; min-height: 0;">
-                <div class="glow-border"
-                    style="padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
-                    <a href="admin.html" id="adminLoginLink"
-                        style="background: #2c3e50; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 16px; font-weight: bold; text-decoration: none; text-align: center;">🛡️
-                        管理者登入</a>
-                    <button onclick="logoutAdmin()" id="adminLogoutBtn"
-                        style="display: none; background: #ef5350; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 16px; font-weight: bold;">🔓
-                        登出管理模式</button>
+            <div class="sidebar-section-content hidden">
+                <div>
+                    <div class="glass-panel"
+                        style="padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                        <a href="admin.html" id="adminLoginLink" class="glass-btn dark"
+                            style="border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 14px; font-weight: bold; text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i data-lucide="key-round" style="width: 16px; height: 16px;"></i> 管理者登入
+                        </a>
+                        <button onclick="logoutAdmin()" id="adminLogoutBtn" class="glass-btn danger"
+                            style="display: none; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin: 0; font-size: 14px; font-weight: bold; align-items: center; justify-content: center; gap: 8px;">
+                            <i data-lucide="log-out" style="width: 16px; height: 16px;"></i> 登出管理模式
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+
     <!-- 主要內容區 -->
     <div id="content-wrapper">
         <div class="controls glow-border">
             <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 5px;">
-                <h2>🚗 車輛自動安排系統</h2>
-                <button onclick="openSettings()" title="使用者功能"
-                    style="background: #eceff1; border: 1px solid #cfd8dc; width: 32px; height: 32px; padding: 0; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #455a64;">
-                    ⚙️
-                </button>
+                <h2 style="display: flex; align-items: center; gap: 10px;">
+                    <i data-lucide="car" style="width: 24px; height: 24px;"></i> 車輛自動安排系統
+                </h2>
+
             </div>
+
             <div class="control-row">
-                <input type="text" id="nameInput" placeholder="請輸入姓名">
-                <button onclick="addPerson('male')" style="background: #bbdefb; color: #1976d2;">加入乾道</button>
-                <button onclick="addPerson('female')" style="background: #f8bbd0; color: #c2185b;">加入坤道</button>
+                <div class="input-container-group">
+                    <input type="text" id="nameInput" placeholder="輸入人員姓名...">
+                    <div class="add-btn-group">
+                        <button class="btn-add male" onclick="addPerson('male')">
+                            <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i> 乾道
+                        </button>
+                        <button class="btn-add female" onclick="addPerson('female')">
+                            <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i> 坤道
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="vehicle-count-row">
@@ -884,16 +208,24 @@
                     <option value="8">8 台</option>
                     <option value="10">10 台</option>
                     <option value="12">12 台</option>
-                    <option value="15">15 台</option>
                     <option value="20">20 台</option>
                 </select>
             </div>
 
+
+
             <div class="action-buttons">
-                <button class="btn-delete-selected" onclick="deleteSelected()">🗑️ 刪除選取人員</button>
-                <button class="btn-clear-all" onclick="clearAllPersons()">🗑️ 清除所有人員</button>
+                <button class="btn-delete-selected" onclick="deleteSelected()"
+                    style="display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i> 刪除選取人員
+                </button>
+                <button class="btn-clear-all" onclick="clearAllPersons()"
+                    style="display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i> 清除所有人員
+                </button>
                 <small style="display: block; width: 100%; margin-top: 5px; color: #666;">點擊人員姓名可選取/取消選取</small>
             </div>
+
         </div>
 
         <div class="lists">
@@ -915,14 +247,19 @@
     <div id="settingsModal" class="modal">
         <div class="modal-content" style="max-width: 450px;">
             <span class="close-modal" onclick="closeSettings()">&times;</span>
-            <h2 style="margin-top: 0; text-align: left;"><span style="font-size: 24px;">⚙️</span> 使用者功能設定</h2>
+            <h2 style="margin-top: 0; text-align: left; display: flex; align-items: center; gap: 10px;">
+                <i data-lucide="settings" style="width: 24px; height: 24px;"></i> 使用者功能設定
+            </h2>
+
 
             <div class="manual-body">
                 <!-- 總開關 -->
                 <div class="settings-group" style="display: flex; justify-content: space-between; align-items: center;">
-                    <div class="settings-label" style="margin-bottom: 0;">
-                        <span>✨ 啟用邊框發光效果</span>
+                    <div class="settings-label" style="margin-bottom: 0; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="sparkles" style="width: 18px; height: 18px;"></i>
+                        <span>啟用邊框發光效果</span>
                     </div>
+
                     <label class="switch">
                         <input type="checkbox" id="glowEnabledToggle" onchange="toggleGlow(this.checked)" checked>
                         <span class="slider-round"></span>
@@ -932,7 +269,10 @@
                 <!-- 詳細設定區 -->
                 <div id="glowSettingsDetail" class="settings-group">
                     <div class="settings-item">
-                        <div class="settings-label">🎨 追蹤光顏色</div>
+                        <div class="settings-label" style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="palette" style="width: 18px; height: 18px;"></i> 追蹤光顏色
+                        </div>
+
                         <div style="display: flex; flex-direction: column; gap: 10px;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <input type="color" id="glowColorPicker" onchange="changeGlowColor(this.value)"
@@ -959,7 +299,10 @@
                     </div>
 
                     <div class="settings-item">
-                        <div class="settings-label">💡 發光亮度</div>
+                        <div class="settings-label" style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="lightbulb" style="width: 18px; height: 18px;"></i> 發光亮度
+                        </div>
+
                         <input type="range" id="glowOpacitySlider" min="0.1" max="1" step="0.05" value="0.7"
                             oninput="updateGlowOpacity(this.value)" style="width: 100%;">
                         <div style="display: flex; justify-content: space-between; margin-top: 5px;">
@@ -969,7 +312,10 @@
                     </div>
 
                     <div class="settings-item">
-                        <div class="settings-label">📏 擴散範圍</div>
+                        <div class="settings-label" style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="ruler" style="width: 18px; height: 18px;"></i> 擴散範圍
+                        </div>
+
                         <input type="range" id="glowSizeSlider" min="50" max="600" step="10" value="150"
                             oninput="updateGlowSize(this.value)" style="width: 100%;">
                         <div style="display: flex; justify-content: space-between; margin-top: 5px;">
@@ -983,11 +329,28 @@
         </div>
     </div>
 
+    <!-- 近期更新 Modal -->
+    <div id="updatesModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeUpdates()">&times;</span>
+            <h2 style="margin-top: 0; text-align: left; display: flex; align-items: center; gap: 10px;">
+                <i data-lucide="sparkles" style="width: 24px; height: 24px; color: #7c3aed;"></i> 近期更新
+            </h2>
+            <div class="manual-body" id="updatesBody">
+                <div style="text-align: center; color: #999; padding: 20px;">載入更新記錄中...</div>
+            </div>
+        </div>
+    </div>
+
     <!-- 使用說明書 Modal -->
+
     <div id="manualModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeManual()">&times;</span>
-            <h2 style="margin-top: 0; text-align: left;"><span style="font-size: 24px;">📖</span> 使用說明書</h2>
+            <h2 style="margin-top: 0; text-align: left; display: flex; align-items: center; gap: 10px;">
+                <i data-lucide="book-open" style="width: 24px; height: 24px;"></i> 使用說明書
+            </h2>
+
             <div class="manual-body">
                 <!-- 由 main.js 動態注入內容 -->
                 <div style="text-align: center; color: #999; padding: 20px;">載入說明書中...</div>
@@ -998,7 +361,27 @@
     <!-- 主要內容區之後的腳本 -->
     <script src="js/main.js"></script>
     <script>
+        // 初始化 Lucide 圖示
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        function openUpdates() {
+            closeSettings();
+            closeManual();
+            const modal = document.getElementById('updatesModal');
+            modal.style.display = 'block';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closeUpdates() {
+            const modal = document.getElementById('updatesModal');
+            modal.style.display = 'none';
+            modal.classList.remove('active');
+        }
+
         function openManual() {
+
             closeSettings();
             const modal = document.getElementById('manualModal');
             modal.style.display = "block";
@@ -1015,12 +398,10 @@
         window.addEventListener('click', function (event) {
             let modal = document.getElementById('manualModal');
             let settingsModal = document.getElementById('settingsModal');
-            if (event.target === modal) {
-                closeManual();
-            }
-            if (event.target === settingsModal) {
-                closeSettings();
-            }
+            let updatesModal = document.getElementById('updatesModal');
+            if (event.target === modal) closeManual();
+            if (event.target === settingsModal) closeSettings();
+            if (event.target === updatesModal) closeUpdates();
         });
 
         function toggleSection(header) {
@@ -1043,9 +424,10 @@
         }
     </script>
 
-    <div class="version-info">
-        載入版本中™
+    <div class="version-info" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+        載入版本中 <i data-lucide="copyright" style="width: 12px; height: 12px;"></i>
     </div>
+
 </body>
 
 </html>
