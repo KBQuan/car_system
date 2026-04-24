@@ -336,9 +336,7 @@
             <h2 style="margin-top: 0; text-align: left; display: flex; align-items: center; gap: 10px;">
                 <i data-lucide="sparkles" style="width: 24px; height: 24px; color: #7c3aed;"></i> 近期更新
             </h2>
-            <div class="manual-body" id="updatesBody">
-                <div style="text-align: center; color: #999; padding: 20px;">載入更新記錄中...</div>
-            </div>
+            <div class="manual-body" id="updatesBody"></div>
         </div>
     </div>
 
@@ -366,12 +364,54 @@
             lucide.createIcons();
         }
 
-        function openUpdates() {
+        async function openUpdates() {
             closeSettings();
             closeManual();
             const modal = document.getElementById('updatesModal');
             modal.style.display = 'block';
             setTimeout(() => modal.classList.add('active'), 10);
+
+            const updatesBody = document.getElementById('updatesBody');
+            if (!updatesBody) return;
+
+            // 顯示載入中
+            updatesBody.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:30px;"><div style="font-size:28px; margin-bottom:8px;">⏳</div><p style="margin:0; font-size:14px;">讀取更新記錄中...</p></div>';
+
+            try {
+                let content = null;
+
+                // 優先從 Supabase 取得最新內容
+                const supabase = window.getSupabase && window.getSupabase();
+                if (supabase) {
+                    const { data } = await supabase
+                        .from('settings')
+                        .select('value')
+                        .eq('room_id', 'SYSTEM_GLOBAL')
+                        .eq('key', 'recent_updates')
+                        .single();
+                    if (data && data.value) content = data.value;
+                }
+
+                // 若 Supabase 無資料，從本地 IndexedDB 讀取快取
+                if (!content && window.appDB) {
+                    const local = await window.appDB.getSetting('recent_updates');
+                    if (local && local.value) content = local.value;
+                }
+
+                if (content) {
+                    updatesBody.innerHTML = content;
+                } else {
+                    updatesBody.innerHTML = `
+<div style="text-align:center; padding:30px 20px; color:#94a3b8;">
+    <div style="font-size:40px; margin-bottom:12px;">📋</div>
+    <p style="font-weight:600; color:#64748b; margin-bottom:6px;">尚未發布近期更新</p>
+    <p style="font-size:13px; margin:0;">管理員可至<strong>管理後台 → 系統設定 → 近期更新編輯</strong>撰寫並同步內容。</p>
+</div>`;
+                }
+            } catch (err) {
+                console.error('[Updates] 讀取失敗:', err);
+                updatesBody.innerHTML = '<div style="text-align:center; color:#ef4444; padding:20px;">讀取失敗，請檢查網路連線。</div>';
+            }
         }
 
         function closeUpdates() {
