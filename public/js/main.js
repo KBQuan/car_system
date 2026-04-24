@@ -51,8 +51,9 @@ async function init() {
         renderVehicleFramework(lockMap, ownerMap);
 
         // 2. 清空名單顯示區
-        document.getElementById('maleList').innerHTML = '<h4>👨 乾道名單</h4>';
-        document.getElementById('femaleList').innerHTML = '<h4>👩 坤道名單</h4>';
+        document.getElementById('maleList').innerHTML = '<h4 style="display: flex; align-items: center; gap: 8px;"><i data-lucide="user"></i> 乾道名單</h4>';
+        document.getElementById('femaleList').innerHTML = '<h4 style="display: flex; align-items: center; gap: 8px;"><i data-lucide="user"></i> 坤道名單</h4>';
+
 
         // 3. 分配人員到對應位置
         data.forEach(p => {
@@ -75,7 +76,9 @@ async function init() {
                 document.getElementById(`${p.gender}List`).appendChild(el);
             }
         });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     } catch (err) {
+
         console.error("初始化失敗:", err);
         alert("資料庫載入失敗！\n錯誤資訊: " + (err.message || err));
     }
@@ -153,18 +156,25 @@ function renderVehicleFramework(lockMap = {}, ownerMap = {}) {
             v.classList.add('locked');
         }
 
-        const lockIcon = lockMap[i] ? '🔒' : '🔓';
+        const lockIcon = lockMap[i] ? 'lock' : 'unlock';
         const ownerName = ownerMap[i] || '';
 
         v.innerHTML = `
             <div class="vehicle-header">
                 <div class="vehicle-title-row">
-                    <strong>🚐 第 ${i} 車</strong>
-                    <div>
-                        <button class="reset-vehicle-btn" onclick="resetVehicle(${i})" style="background: none; border: 1px solid #ddd; font-size: 18px; padding: 5px 10px; border-radius: 50%; cursor: pointer; color: #ff9800; margin-right: 5px;" title="重置該車輛">🔄</button>
-                        <button class="lock-btn" onclick="toggleLock(${i})">${lockIcon}</button>
+                    <strong style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="truck" style="width: 18px; height: 18px;"></i> 第 ${i} 車
+                    </strong>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="reset-vehicle-btn" onclick="resetVehicle(${i})" style="background: none; border: 1px solid #ddd; width: 32px; height: 32px; padding: 0; border-radius: 50%; cursor: pointer; color: #ff9800; display: flex; align-items: center; justify-content: center;" title="重置該車輛">
+                            <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
+                        </button>
+                        <button class="lock-btn" onclick="toggleLock(${i})" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="${lockIcon}" style="width: 16px; height: 16px;"></i>
+                        </button>
                     </div>
                 </div>
+
                 <input type="text" class="vehicle-owner-input" 
                        placeholder="輸入車主姓名" 
                        value="${ownerName}"
@@ -183,7 +193,9 @@ function renderVehicleFramework(lockMap = {}, ownerMap = {}) {
         }
         container.appendChild(v);
     }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
+
 
 // 儲存車輛數
 async function saveVehicleCount() {
@@ -370,7 +382,10 @@ async function toggleLock(id) {
     const v = document.getElementById(`vehicle-${id}`);
     const btn = v.querySelector('.lock-btn');
     const isLocked = v.classList.toggle('locked');
-    btn.innerText = isLocked ? '🔒' : '🔓';
+
+    btn.innerHTML = `<i data-lucide="${isLocked ? 'lock' : 'unlock'}" style="width: 16px; height: 16px;"></i>`;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
 
     await window.appDB.saveLock(id, isLocked ? 1 : 0);
 
@@ -390,7 +405,13 @@ async function toggleLock(id) {
     });
 
     vehicles.forEach(veh => container.appendChild(veh));
+    
+    // 確保同步到雲端
+    if (window.syncManager) {
+        await window.syncManager.pushChange('locks', 'put', { vehicle_id: id, is_locked: isLocked ? 1 : 0 });
+    }
 }
+
 
 // 匯入 Excel 功能
 async function importExcel(event) {
@@ -753,10 +774,21 @@ function checkAdminStatus() {
         // 調整登入/登出按鈕顯示
         const loginLink = document.getElementById('adminLoginLink');
         const logoutBtn = document.getElementById('adminLogoutBtn');
-        if (loginLink) loginLink.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'block';
+        if (loginLink) {
+            loginLink.style.display = 'none';
+        }
+        if (logoutBtn) {
+            logoutBtn.style.display = 'flex';
+            logoutBtn.style.alignItems = 'center';
+            logoutBtn.style.justifyContent = 'center';
+            logoutBtn.style.gap = '8px';
+            logoutBtn.innerHTML = '<i data-lucide="unlock" style="width: 18px; height: 18px;"></i> 登出管理模式';
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
 
-        console.log("🛡️ 目前處於管理者模式");
+
+        console.log("Lucide: 目前處於管理者模式");
+
     }
 }
 
@@ -779,17 +811,18 @@ window.logoutAdmin = logoutAdmin;
 window.logoutAdmin = logoutAdmin;
 window.checkAdminStatus = checkAdminStatus;
 
-const originalInit = window.onload;
-window.onload = async () => {
-    // 確保 init 先執行
-    await init();
-    
-    // 再執行原本可能存在的 onload 或權限檢查
-    if (typeof originalInit === 'function' && originalInit !== init) {
-        await originalInit();
+// 使用 addEventListener 替代 window.onload 以增加穩定性
+window.addEventListener('load', async () => {
+    try {
+        await init();
+        checkAdminStatus();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch (err) {
+        console.error("Initialization failed:", err);
     }
-    checkAdminStatus();
-};
+});
+
+
 
 /**
  * 載入系統全域設定 (由 admin_index.html 管理，優先從 Supabase 抓取)
@@ -824,8 +857,10 @@ async function loadSystemConfig() {
     const versionVal = remoteSettings['system_version'] || versionData.value;
     if (versionVal) {
         document.querySelectorAll('.version-info').forEach(el => {
-            el.textContent = `${versionVal} 版™`;
+            el.innerHTML = `${versionVal} 版™ <i data-lucide="copyright" style="width: 12px; height: 12px;"></i>`;
         });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
     }
 
     // 2. 載入說明書內容
@@ -834,6 +869,23 @@ async function loadSystemConfig() {
     if (manualVal) {
         const container = document.querySelector('#manualModal .manual-body');
         if (container) container.innerHTML = manualVal;
+    }
+
+    // 2b. 載入近期更新內容
+    const updatesData = await window.appDB.getSetting('recent_updates');
+    const updatesVal = remoteSettings['recent_updates'] || updatesData.value;
+    const updatesBody = document.getElementById('updatesBody');
+    if (updatesBody) {
+        if (updatesVal) {
+            updatesBody.innerHTML = updatesVal;
+        } else {
+            updatesBody.innerHTML = `
+<div style="text-align:center; padding: 30px 20px; color:#94a3b8;">
+    <div style="font-size: 40px; margin-bottom: 12px;">📋</div>
+    <p style="font-weight:600; color:#64748b; margin-bottom: 6px;">尚未發布近期更新</p>
+    <p style="font-size: 13px; margin: 0;">管理員可至<strong>管理後台 → 系統設定 → 近期更新編輯</strong>撰寫並同步內容。</p>
+</div>`;
+        }
     }
 
     // 3. 載入房間預設
