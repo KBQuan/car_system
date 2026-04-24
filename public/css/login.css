@@ -1,0 +1,146 @@
+:root {
+    --admin-primary: #2c3e50;
+    /* 管理者專用深藍 */
+    --admin-accent: #f39c12;
+    /* 權限金色 */
+    --bg-color: #ecf0f1;
+}
+
+body {
+    font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-image: radial-gradient(circle at center, #dcdde1 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+.login-container {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 420px;
+    box-sizing: border-box;
+    border-top: 5px solid var(--admin-primary);
+}
+
+h2 {
+    text-align: center;
+    color: var(--admin-primary);
+    margin: 0 0 10px 0;
+    font-size: 26px;
+    letter-spacing: 2px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 14px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    color: var(--admin-primary);
+    margin-bottom: 8px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 8px rgba(44, 62, 80, 0.2);
+}
+
+.captcha-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.captcha-input-wrap {
+    flex-grow: 1;
+}
+
+.captcha-img-wrap {
+    height: 44px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #555;
+    width: 100px;
+    user-select: none;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    background-color: var(--admin-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+
+button:hover {
+    background-color: #34495e;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+button:disabled {
+    background-color: #bdc3c7 !important;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.error-msg {
+    color: #e74c3c;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 15px;
+    display: none;
+}
+
+.back-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.back-link a {
+    color: #7f8c8d;
+    text-decoration: none;
+}
+
+.back-link a:hover {
+    text-decoration: underline;
+}
