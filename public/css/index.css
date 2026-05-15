@@ -11,7 +11,8 @@
     z-index: 1000;
     display: flex;
     flex-direction: column;
-    padding: 0; /* 改為由內部元件控制 padding */
+    padding: 0;
+    /* 改為由內部元件控制 padding */
     box-sizing: border-box;
     border-right: 1px solid #f1f5f9;
 }
@@ -105,7 +106,7 @@
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(226, 232, 240, 0.8);
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .glass-btn {
@@ -126,97 +127,111 @@
     letter-spacing: 0.2px;
     box-sizing: border-box;
 }
-.glass-btn:hover  { transform: translateY(-1px); }
-.glass-btn:active { transform: scale(0.98); }
+
+.glass-btn:hover {
+    transform: translateY(-1px);
+}
+
+.glass-btn:active {
+    transform: scale(0.98);
+}
 
 .glass-btn.primary {
     background: rgba(124, 58, 237, 0.14);
     color: #7c3aed;
     border: 1.5px solid rgba(124, 58, 237, 0.3);
-    box-shadow: 0 4px 14px rgba(124,58,237,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
+
 .glass-btn.primary:hover {
     background: rgba(124, 58, 237, 0.24);
-    box-shadow: 0 6px 18px rgba(124,58,237,0.18);
+    box-shadow: 0 6px 18px rgba(124, 58, 237, 0.18);
 }
 
 .glass-btn.info {
     background: rgba(59, 130, 246, 0.14);
     color: #2563eb;
     border: 1.5px solid rgba(59, 130, 246, 0.3);
-    box-shadow: 0 4px 14px rgba(59,130,246,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
+
 .glass-btn.info:hover {
     background: rgba(59, 130, 246, 0.24);
-    box-shadow: 0 6px 18px rgba(59,130,246,0.18);
+    box-shadow: 0 6px 18px rgba(59, 130, 246, 0.18);
 }
 
 .glass-btn.warning {
     background: rgba(245, 158, 11, 0.14);
     color: #b45309;
     border: 1.5px solid rgba(245, 158, 11, 0.3);
-    box-shadow: 0 4px 14px rgba(245,158,11,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
+
 .glass-btn.warning:hover {
     background: rgba(245, 158, 11, 0.24);
-    box-shadow: 0 6px 18px rgba(245,158,11,0.18);
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.18);
 }
 
 .glass-btn.success {
     background: rgba(34, 197, 94, 0.14);
     color: #16a34a;
     border: 1.5px solid rgba(34, 197, 94, 0.3);
-    box-shadow: 0 4px 14px rgba(34,197,94,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
+
 .glass-btn.success:hover {
     background: rgba(34, 197, 94, 0.24);
-    box-shadow: 0 6px 18px rgba(34,197,94,0.18);
+    box-shadow: 0 6px 18px rgba(34, 197, 94, 0.18);
 }
 
 .glass-btn.secondary {
     background: rgba(100, 116, 139, 0.12);
     color: #475569;
     border: 1.5px solid rgba(100, 116, 139, 0.25);
-    box-shadow: 0 4px 14px rgba(100,116,139,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+    box-shadow: 0 4px 14px rgba(100, 116, 139, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
+
 .glass-btn.secondary:hover {
     background: rgba(100, 116, 139, 0.22);
-    box-shadow: 0 6px 18px rgba(100,116,139,0.14);
+    box-shadow: 0 6px 18px rgba(100, 116, 139, 0.14);
 }
 
 .glass-btn.danger {
     background: rgba(239, 68, 68, 0.14);
     color: #dc2626;
     border: 1.5px solid rgba(239, 68, 68, 0.3);
-    box-shadow: 0 4px 14px rgba(239,68,68,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
+
 .glass-btn.danger:hover {
     background: rgba(239, 68, 68, 0.24);
-    box-shadow: 0 6px 18px rgba(239,68,68,0.18);
+    box-shadow: 0 6px 18px rgba(239, 68, 68, 0.18);
 }
 
 .glass-btn.dark {
     background: rgba(44, 62, 80, 0.12);
     color: #1e293b;
     border: 1.5px solid rgba(44, 62, 80, 0.25);
-    box-shadow: 0 4px 14px rgba(44,62,80,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
+    box-shadow: 0 4px 14px rgba(44, 62, 80, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
+
 .glass-btn.dark:hover {
     background: rgba(44, 62, 80, 0.22);
-    box-shadow: 0 6px 18px rgba(44,62,80,0.14);
+    box-shadow: 0 6px 18px rgba(44, 62, 80, 0.14);
 }
 
 /* 近期更新 nav-item pill 特殊色 */
 .nav-item-pill-update {
-    background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.1));
-    border: 1px solid rgba(139,92,246,0.2);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(59, 130, 246, 0.1));
+    border: 1px solid rgba(139, 92, 246, 0.2);
     border-radius: 50px;
     padding: 10px 16px;
     margin-bottom: 8px;
     color: #7c3aed;
 }
+
 .nav-item-pill-update:hover {
-    background: linear-gradient(135deg, rgba(139,92,246,0.22), rgba(59,130,246,0.18));
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(59, 130, 246, 0.18));
 }
 
 
@@ -314,7 +329,7 @@ body.sidebar-open #content-wrapper {
     background: rgba(234, 88, 12, 0.18);
     color: #c2410c;
     border: 1.5px solid rgba(234, 88, 12, 0.45);
-    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.15), inset 0 1px 0 rgba(255,255,255,0.7);
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .btn-delete-selected:hover {
@@ -327,7 +342,7 @@ body.sidebar-open #content-wrapper {
     background: rgba(220, 38, 38, 0.18);
     color: #b91c1c;
     border: 1.5px solid rgba(220, 38, 38, 0.45);
-    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.15), inset 0 1px 0 rgba(255,255,255,0.7);
+    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .btn-clear-all:hover {
@@ -634,7 +649,7 @@ body.glow-disabled .glow-border::before {
     background: rgba(59, 130, 246, 0.12);
     color: #2563eb;
     border: 1px solid rgba(59, 130, 246, 0.25);
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1), inset 0 1px 0 rgba(255,255,255,0.7);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .btn-add.male:hover {
@@ -646,7 +661,7 @@ body.glow-disabled .glow-border::before {
     background: rgba(225, 29, 72, 0.12);
     color: #e11d48;
     border: 1px solid rgba(225, 29, 72, 0.25);
-    box-shadow: 0 2px 8px rgba(225, 29, 72, 0.1), inset 0 1px 0 rgba(255,255,255,0.7);
+    box-shadow: 0 2px 8px rgba(225, 29, 72, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .btn-add.female:hover {
@@ -709,7 +724,7 @@ button:active {
     background: rgba(34, 197, 94, 0.15);
     color: #16a34a;
     border: 1px solid rgba(34, 197, 94, 0.3);
-    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .import-btn:hover {
@@ -721,7 +736,7 @@ button:active {
     background: rgba(59, 130, 246, 0.15);
     color: #2563eb;
     border: 1px solid rgba(59, 130, 246, 0.3);
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .export-btn:hover {
@@ -733,7 +748,7 @@ button:active {
     background: rgba(34, 197, 94, 0.15);
     color: #16a34a;
     border: 1px solid rgba(34, 197, 94, 0.3);
-    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .export-excel-btn:hover {
