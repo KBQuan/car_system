@@ -51,8 +51,11 @@ async function init() {
         renderVehicleFramework(lockMap, ownerMap);
 
         // 2. 清空名單顯示區
-        document.getElementById('maleList').innerHTML = '<h4 style="display: flex; align-items: center; gap: 8px;"><i data-lucide="user"></i> 乾道名單</h4>';
-        document.getElementById('femaleList').innerHTML = '<h4 style="display: flex; align-items: center; gap: 8px;"><i data-lucide="user"></i> 坤道名單</h4>';
+        const maleCount = data.filter(p => p.gender === 'male' && !p.vehicle_id).length;
+        const femaleCount = data.filter(p => p.gender === 'female' && !p.vehicle_id).length;
+
+        document.getElementById('maleList').innerHTML = `<h4 style="display: flex; align-items: center; gap: 8px; width: 100%;"><i data-lucide="user"></i> 乾道名單 <span class="count-badge">${maleCount}</span></h4>`;
+        document.getElementById('femaleList').innerHTML = `<h4 style="display: flex; align-items: center; gap: 8px; width: 100%;"><i data-lucide="user"></i> 坤道名單 <span class="count-badge">${femaleCount}</span></h4>`;
 
 
         // 3. 分配人員到對應位置
